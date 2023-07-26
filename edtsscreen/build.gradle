@@ -2,11 +2,10 @@ plugins {
     id 'com.android.library'
     id 'org.jetbrains.kotlin.android'
     id 'maven-publish'
-    id 'kotlin-kapt'
 }
 
 group = 'id.co.edtslib.edtsscreen'
-version = '1.0.0'
+version = '1.0.84'
 
 afterEvaluate {
     publishing {
