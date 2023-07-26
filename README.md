@@ -35,6 +35,17 @@ Here's a basic implementation.
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 ```
+### Prerequisite
+
+Add permission tag on your manifest
+
+```xml
+    <uses-permission android:name="android.permission.CAMERA"/>
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"/>
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
+        tools:ignore="ScopedStorage" />
+```
+
 ### Implementation
 
 ```kotlin
