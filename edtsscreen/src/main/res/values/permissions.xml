@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="permission_title">Izinkan Akses</string>
+    <string name="permission_rationale">Penggunakan akses dibutuhkan oleh aplikasi ini</string>
+    <string name="permission_btn_setting">Pengaturan</string>
+    <string name="permission_btn_back">Kembali</string>
+    <string name="permission_setting">Silahkan ubah permission di pengaturan telepon anda</string>
+
+    <string name="camera">Kamera</string>
+
+</resources>
