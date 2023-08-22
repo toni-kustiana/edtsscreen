@@ -1,28 +1,37 @@
 package id.co.edtsscreen
 
+import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.Toast
-import id.co.edtslib.edtsscreen.scancode.ScanCodeDelegate
-import id.co.edtslib.edtsscreen.scancode.ScanCodeFragment
+import id.co.edtslib.edtsscreen.nfc.NfcData
+import id.co.edtslib.edtsscreen.nfc.NfcDelegate
+import id.co.edtslib.edtsscreen.nfc.NfcFragment
+import id.co.edtslib.edtsscreen.nfc.record.ParsedNdefRecord
 
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        val fragment = supportFragmentManager.findFragmentById(R.id.fragment_container_view) as ScanCodeFragment
-        fragment.delegate = object : ScanCodeDelegate {
-            override fun onScanned(code: String) {
-                Toast.makeText(this@MainActivity, code, Toast.LENGTH_LONG).show()
-            }
-
-            override fun onBack() {
-                finish()
+        val fragment = supportFragmentManager.findFragmentById(R.id.fragment_container_view) as NfcFragment
+        fragment.delegate = object : NfcDelegate {
+            override fun onNfcReceived(records: List<ParsedNdefRecord>) {
+                records.forEach {record ->
+                    val nfcData = NfcData.fromJson(record.str())
+                    if (nfcData?.id != null) {
+                        Toast.makeText(this@MainActivity, nfcData.toString(), Toast.LENGTH_SHORT).show()
+                    }
+                }
             }
         }
-        fragment.title = "Title"
-        fragment.helper = "Scan Code by edts"
+    }
+
+    override fun onNewIntent(intent: Intent?) {
+        super.onNewIntent(intent)
+
+        val fragment = supportFragmentManager.findFragmentById(R.id.fragment_container_view) as NfcFragment
+        fragment.process(intent)
 
     }
 }

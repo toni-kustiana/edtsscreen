@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="nfc_title">Tempelkan kartu kamu ke\nBelakang HP</string>
+    <string name="nfc_description">Untuk mulai, tempelkan kartu e-money\nkamu ke bagian belakang HP kamu.</string>
+</resources>
