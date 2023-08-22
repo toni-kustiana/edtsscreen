@@ -8,7 +8,7 @@ import id.co.edtslib.edtsscreen.databinding.FragmentNfcBinding
 import id.co.edtslib.edtsscreen.nfc.parser.NdefMessageParser
 import id.co.edtslib.uibase.BaseFragment
 
-class NfcFragment: BaseFragment<FragmentNfcBinding>() {
+open class NfcFragment: BaseFragment<FragmentNfcBinding>() {
     lateinit var nfcManager: NfcManager
 
     var delegate: NfcDelegate? = null
