@@ -103,6 +103,14 @@ Add permission tag on your manifest
 tools:ignore="ScopedStorage" />
 ```
 
+Add config on app build gradle
+
+```groovy
+    configurations {
+        all*.exclude group: 'com.google.guava', module: 'listenablefuture'
+    }
+```
+
 ### Implementation
 
 ```kotlin
