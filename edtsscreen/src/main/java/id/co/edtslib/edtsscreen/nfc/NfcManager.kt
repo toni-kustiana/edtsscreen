@@ -15,7 +15,7 @@ class NfcManager(private val activity: FragmentActivity, intent: Intent) {
         fun onRead(messages: Array<NdefMessage?>)
     }
 
-    private var nfcAdapter: NfcAdapter = NfcAdapter.getDefaultAdapter(activity)
+    private var nfcAdapter: NfcAdapter? = NfcAdapter.getDefaultAdapter(activity)
     private var pendingIntent: PendingIntent = PendingIntent.getActivity(
         activity, 0, intent
             .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP), PendingIntent.FLAG_MUTABLE
@@ -25,7 +25,7 @@ class NfcManager(private val activity: FragmentActivity, intent: Intent) {
 
     fun dispatch() {
         //if (!nfcAdapter.isEnabled) showWirelessSettings()
-        nfcAdapter.enableForegroundDispatch(activity,
+        nfcAdapter?.enableForegroundDispatch(activity,
             pendingIntent,
             null,
             null)
