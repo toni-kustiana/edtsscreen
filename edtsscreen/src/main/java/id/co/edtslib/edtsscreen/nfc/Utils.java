@@ -1,5 +1,8 @@
 package id.co.edtslib.edtsscreen.nfc;
 
+import android.content.Context;
+import android.nfc.NfcAdapter;
+
 public class Utils {
     public static String toHex(byte[] bytes) {
         StringBuilder sb = new StringBuilder();
@@ -49,5 +52,18 @@ public class Utils {
             factor *= 256L;
         }
         return result;
+    }
+
+
+    public static void checkNfcStatus(NfcAdapter nfcAdapter, Runnable onUnsupported, Runnable onEnabled, Runnable onDisabled) {
+        if (nfcAdapter == null) {
+            onUnsupported.run();
+            return;
+        }
+        if(nfcAdapter.isEnabled()) {
+            onEnabled.run();
+        } else {
+            onDisabled.run();
+        }
     }
 }

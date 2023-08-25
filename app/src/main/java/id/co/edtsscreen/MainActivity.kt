@@ -3,6 +3,7 @@ package id.co.edtsscreen
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.widget.Button
 import android.widget.Toast
 import id.co.edtslib.edtsscreen.nfc.NfcData
 import id.co.edtslib.edtsscreen.nfc.NfcDelegate
@@ -24,6 +25,17 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
             }
+
+            override fun keepTrayAfterScan() = false
+        }
+        setupListener()
+    }
+
+    private fun setupListener() {
+        val btnScan = findViewById<Button>(R.id.btnScan)
+        btnScan.setOnClickListener {
+            val fragment = supportFragmentManager.findFragmentById(R.id.fragment_container_view) as NfcFragment
+            fragment.showTray()
         }
     }
 

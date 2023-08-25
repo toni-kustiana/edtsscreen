@@ -7,12 +7,17 @@ import android.nfc.NdefRecord
 import android.nfc.NfcAdapter
 import android.nfc.Tag
 import android.os.Parcelable
+import android.provider.Settings
+import android.view.View
 import androidx.fragment.app.FragmentActivity
 import com.google.gson.Gson
+import id.co.edtslib.edtsds.popup.Popup
+import id.co.edtslib.edtsds.popup.PopupDelegate
 
 class NfcManager(private val activity: FragmentActivity, intent: Intent) {
     interface NfcManagerDelegate {
         fun onRead(messages: Array<NdefMessage?>)
+        fun openSetting(popup: Popup)
     }
 
     private var nfcAdapter: NfcAdapter? = NfcAdapter.getDefaultAdapter(activity)
@@ -22,6 +27,37 @@ class NfcManager(private val activity: FragmentActivity, intent: Intent) {
     )
 
     var delegate: NfcManagerDelegate? = null
+
+    fun checkNfcFeature(callback: () -> Unit) {
+        Utils.checkNfcStatus(nfcAdapter, {
+            Popup.show(
+                activity = activity,
+                title = "Fitur NFC",
+                message = "Ponsel anda tidak mendukung fitur NFC.",
+                positiveButton = "Tutup",
+                positiveClickListener = null
+            )
+        }, {
+            callback.invoke()
+        }, {
+            Popup.show(
+                activity = activity,
+                title = "Fitur NFC",
+                message = "Aktifkan fitur NFC pada ponsel anda.",
+                positiveButton = "Pengaturan",
+                negativeButton = "Batal",
+                positiveClickListener = object : PopupDelegate {
+                    override fun onClick(popup: Popup, view: View) {
+                        /** Open NFC Setting on Android phone */
+                        val intent = Intent(Settings.ACTION_NFC_SETTINGS)
+                        activity.startActivity(intent)
+                        popup.dismiss()
+                    }
+                },
+                negativeClickListener = null
+            )
+        })
+    }
 
     fun dispatch() {
         //if (!nfcAdapter.isEnabled) showWirelessSettings()
@@ -38,6 +74,7 @@ class NfcManager(private val activity: FragmentActivity, intent: Intent) {
         }
     }
 
+    @Suppress("DEPRECATION")
     private fun resolveIntent(intent: Intent) {
         val action = intent.action
 

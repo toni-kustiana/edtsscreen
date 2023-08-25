@@ -1,10 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-<id.co.edtslib.edtsds.bottom.BottomLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<id.co.edtslib.edtsds.bottom.BottomLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/bottomLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:id="@+id/bottomLayout"
+    android:background="@color/colorOpacity"
+    android:visibility="gone"
+    app:contentLayout="@layout/tray_nfc"
     app:popup="true"
     app:tray="false"
-    app:contentLayout="@layout/tray_nfc" />
+    tools:visibility="visible" />
