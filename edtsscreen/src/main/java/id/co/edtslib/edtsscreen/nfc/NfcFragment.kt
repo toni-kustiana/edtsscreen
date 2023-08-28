@@ -7,17 +7,17 @@ import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.core.view.isVisible
 import id.co.edtslib.edtsds.popup.Popup
-import id.co.edtslib.edtsscreen.databinding.FragmentNfcBinding
+import id.co.edtslib.edtsscreen.databinding.EdtsScreenFragmentNfcBinding
 import id.co.edtslib.edtsscreen.nfc.parser.NdefMessageParser
 import id.co.edtslib.uibase.BaseFragment
 
-open class NfcFragment: BaseFragment<FragmentNfcBinding>() {
-    private lateinit var nfcManager: NfcManager
+open class NfcFragment: BaseFragment<EdtsScreenFragmentNfcBinding>() {
+    lateinit var nfcManager: NfcManager
 
     var delegate: NfcDelegate? = null
 
-    override val bindingInflater: (LayoutInflater, ViewGroup?, Boolean) -> FragmentNfcBinding
-        get() = FragmentNfcBinding::inflate
+    override val bindingInflater: (LayoutInflater, ViewGroup?, Boolean) -> EdtsScreenFragmentNfcBinding
+        get() = EdtsScreenFragmentNfcBinding::inflate
 
     override fun getTrackerPageName(): String? = null
 

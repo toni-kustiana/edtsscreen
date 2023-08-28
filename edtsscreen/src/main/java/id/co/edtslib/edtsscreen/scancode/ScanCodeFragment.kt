@@ -9,12 +9,12 @@ import androidx.core.view.isVisible
 import com.budiyev.android.codescanner.CodeScanner
 import com.budiyev.android.codescanner.DecodeCallback
 import id.co.edtslib.edtsds.R
-import id.co.edtslib.edtsscreen.databinding.FragmentScanCodeBinding
+import id.co.edtslib.edtsscreen.databinding.EdtsScreenFragmentScanCodeBinding
 import id.co.edtslib.edtsscreen.utils.PermissionUtils
 import id.co.edtslib.edtsscreen.utils.PermissionUtils.showRationaleDialog
 import id.co.edtslib.uibase.BaseFragment
 
-open class ScanCodeFragment: BaseFragment<FragmentScanCodeBinding>() {
+open class ScanCodeFragment: BaseFragment<EdtsScreenFragmentScanCodeBinding>() {
     lateinit var codeScanner: CodeScanner
 
     var title: String? = null
@@ -60,8 +60,8 @@ open class ScanCodeFragment: BaseFragment<FragmentScanCodeBinding>() {
 
     var delegate: ScanCodeDelegate? = null
 
-    override val bindingInflater: (LayoutInflater, ViewGroup?, Boolean) -> FragmentScanCodeBinding
-        get() = FragmentScanCodeBinding::inflate
+    override val bindingInflater: (LayoutInflater, ViewGroup?, Boolean) -> EdtsScreenFragmentScanCodeBinding
+        get() = EdtsScreenFragmentScanCodeBinding::inflate
 
     override fun getTrackerPageName(): String?  = null
 

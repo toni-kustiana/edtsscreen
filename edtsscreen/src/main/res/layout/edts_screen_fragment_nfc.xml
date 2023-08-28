@@ -7,7 +7,7 @@
     android:layout_height="match_parent"
     android:background="@color/colorOpacity"
     android:visibility="gone"
-    app:contentLayout="@layout/tray_nfc"
+    app:contentLayout="@layout/edts_screen_tray_nfc"
     app:popup="true"
     app:tray="false"
     tools:visibility="visible" />
