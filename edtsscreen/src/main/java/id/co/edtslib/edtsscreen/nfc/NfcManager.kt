@@ -6,8 +6,10 @@ import android.nfc.NdefMessage
 import android.nfc.NdefRecord
 import android.nfc.NfcAdapter
 import android.nfc.Tag
+import android.nfc.tech.IsoDep
 import android.os.Parcelable
 import android.provider.Settings
+import android.util.Log
 import android.view.View
 import androidx.fragment.app.FragmentActivity
 import com.google.gson.Gson
@@ -17,6 +19,7 @@ import id.co.edtslib.edtsds.popup.PopupDelegate
 class NfcManager(private val activity: FragmentActivity, intent: Intent) {
     interface NfcManagerDelegate {
         fun onRead(messages: Array<NdefMessage?>)
+        fun onCommandReceived(bytes: ByteArray, hex: String)
         fun openSetting(popup: Popup)
     }
 
@@ -67,15 +70,15 @@ class NfcManager(private val activity: FragmentActivity, intent: Intent) {
             null)
     }
 
-    fun processIntent(intent: Intent?) {
+    fun processIntent(intent: Intent?, bytes: ByteArray? = null) {
         if (intent != null) {
             activity.intent = intent
-            resolveIntent(intent)
+            resolveIntent(intent, bytes)
         }
     }
 
     @Suppress("DEPRECATION")
-    private fun resolveIntent(intent: Intent) {
+    private fun resolveIntent(intent: Intent, bytes: ByteArray? = null) {
         val action = intent.action
 
         if (NfcAdapter.ACTION_TAG_DISCOVERED == action ||
@@ -102,9 +105,34 @@ class NfcManager(private val activity: FragmentActivity, intent: Intent) {
                     msgs = arrayOf(msg)
 
                     delegate?.onRead(msgs)
+
+                    if (bytes != null) {
+                        prosesIsoDep(tag, bytes)
+                    }
+
                 }
             }
         }
+    }
+
+    fun prosesIsoDep(tag: Tag, bytes: ByteArray?) {
+        val isoDep = IsoDep.get(tag)
+        isoDep.connect()
+        isoDep.timeout = 5000 // 5 sec time out
+
+        val isConnected = isoDep?.isConnected
+        if (isConnected == true) {
+            try {
+                val lastBalanceBytes = isoDep.transceive(bytes)
+                val lastBalanceHex = Utils.toHex(lastBalanceBytes)
+                delegate?.onCommandReceived(lastBalanceBytes, lastBalanceHex)
+            } catch (err: Exception) {
+                Log.e("NfcManager", "error=${err.message}")
+            }
+        } else {
+            Log.e("NfcManager", "NFC not connected")
+        }
+        isoDep.close()
     }
 
     private fun dumpTagData(tag: Tag): NfcData {

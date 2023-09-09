@@ -5,9 +5,11 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.Button
 import android.widget.Toast
+import androidx.appcompat.widget.AppCompatTextView
 import id.co.edtslib.edtsscreen.nfc.NfcData
 import id.co.edtslib.edtsscreen.nfc.NfcDelegate
 import id.co.edtslib.edtsscreen.nfc.NfcFragment
+import id.co.edtslib.edtsscreen.nfc.Utils
 import id.co.edtslib.edtsscreen.nfc.record.ParsedNdefRecord
 
 class MainActivity : AppCompatActivity() {
@@ -21,9 +23,17 @@ class MainActivity : AppCompatActivity() {
                 records.forEach {record ->
                     val nfcData = NfcData.fromJson(record.str())
                     if (nfcData?.id != null) {
+                        val tvText = findViewById<AppCompatTextView>(R.id.tvText)
+//                        tvText.text = nfcData.toString()
                         Toast.makeText(this@MainActivity, nfcData.toString(), Toast.LENGTH_SHORT).show()
                     }
                 }
+            }
+
+            override fun onNfcReceived(bytes: ByteArray, hex: String) {
+                val tvText = findViewById<AppCompatTextView>(R.id.tvText)
+                val balance = Utils.toInt32(bytes, 0)
+                tvText.text = String.format("bytes=%s\nhex=%s\nbalance=$balance", bytes.contentToString(), hex, balance)
             }
 
             override fun keepTrayAfterScan() = false
@@ -43,7 +53,7 @@ class MainActivity : AppCompatActivity() {
         super.onNewIntent(intent)
 
         val fragment = supportFragmentManager.findFragmentById(R.id.fragment_container_view) as NfcFragment
-        fragment.process(intent)
+        fragment.process(intent, Utils.hexToByteArray("00B500000A"))
 
     }
 }

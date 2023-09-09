@@ -40,6 +40,10 @@ open class NfcFragment: BaseFragment<EdtsScreenFragmentNfcBinding>() {
                 }, 1500L)
             }
 
+            override fun onCommandReceived(bytes: ByteArray, hex: String) {
+                delegate?.onNfcReceived(bytes, hex)
+            }
+
             override fun openSetting(popup: Popup) {
                 /** Open NFC Setting on Android phone */
                 val intent = Intent(Settings.ACTION_NFC_SETTINGS)
@@ -49,9 +53,9 @@ open class NfcFragment: BaseFragment<EdtsScreenFragmentNfcBinding>() {
         }
     }
 
-    fun process(intent: Intent?) {
+    fun process(intent: Intent?, bytes: ByteArray? = null) {
         if (intent != null) {
-            nfcManager.processIntent(intent)
+            nfcManager.processIntent(intent, bytes)
         }
     }
 
