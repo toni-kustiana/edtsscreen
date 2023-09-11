@@ -40,8 +40,8 @@ open class NfcFragment: BaseFragment<EdtsScreenFragmentNfcBinding>() {
                 }, 1500L)
             }
 
-            override fun onCommandReceived(bytes: ByteArray, hex: String) {
-                delegate?.onNfcReceived(bytes, hex)
+            override fun onCommandReceived(txBytes: ByteArray, rxBytes: ByteArray) {
+                delegate?.onNfcReceived(txBytes, rxBytes)
             }
 
             override fun openSetting(popup: Popup) {

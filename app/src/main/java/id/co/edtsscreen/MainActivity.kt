@@ -30,10 +30,10 @@ class MainActivity : AppCompatActivity() {
                 }
             }
 
-            override fun onNfcReceived(bytes: ByteArray, hex: String) {
+            override fun onNfcReceived(txBytes: ByteArray, rxBytes: ByteArray) {
                 val tvText = findViewById<AppCompatTextView>(R.id.tvText)
-                val balance = Utils.toInt32(bytes, 0)
-                tvText.text = String.format("bytes=%s\nhex=%s\nbalance=$balance", bytes.contentToString(), hex, balance)
+                val balance = Utils.toInt32(rxBytes, 0)
+                tvText.text = String.format("bytes=%s\nhex=%s\nbalance=$balance", rxBytes.contentToString(), rxBytes, balance)
             }
 
             override fun keepTrayAfterScan() = false

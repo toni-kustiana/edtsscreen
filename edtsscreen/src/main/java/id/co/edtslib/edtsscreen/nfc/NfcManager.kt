@@ -19,7 +19,11 @@ import id.co.edtslib.edtsds.popup.PopupDelegate
 class NfcManager(private val activity: FragmentActivity, intent: Intent) {
     interface NfcManagerDelegate {
         fun onRead(messages: Array<NdefMessage?>)
-        fun onCommandReceived(bytes: ByteArray, hex: String)
+        /**
+         * txBytes: Byte Array of transmitter command
+         * rxBytes: Byte Array of receiver result
+         * */
+        fun onCommandReceived(txBytes: ByteArray, rxBytes: ByteArray)
         fun openSetting(popup: Popup)
     }
 
@@ -121,11 +125,10 @@ class NfcManager(private val activity: FragmentActivity, intent: Intent) {
         isoDep.timeout = 5000 // 5 sec time out
 
         val isConnected = isoDep?.isConnected
-        if (isConnected == true) {
+        if (isConnected == true && bytes != null) {
             try {
                 val lastBalanceBytes = isoDep.transceive(bytes)
-                val lastBalanceHex = Utils.toHex(lastBalanceBytes)
-                delegate?.onCommandReceived(lastBalanceBytes, lastBalanceHex)
+                delegate?.onCommandReceived(bytes, lastBalanceBytes)
             } catch (err: Exception) {
                 Log.e("NfcManager", "error=${err.message}")
             }
