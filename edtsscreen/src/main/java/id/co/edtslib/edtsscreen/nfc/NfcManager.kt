@@ -25,6 +25,7 @@ class NfcManager(private val activity: FragmentActivity, intent: Intent) {
          * */
         fun onCommandReceived(txBytes: ByteArray, rxBytes: ByteArray)
         fun openSetting(popup: Popup)
+        fun onClosePopup()
     }
 
     private var nfcAdapter: NfcAdapter? = NfcAdapter.getDefaultAdapter(activity)
@@ -44,7 +45,11 @@ class NfcManager(private val activity: FragmentActivity, intent: Intent) {
                 title = "Fitur NFC",
                 message = "Ponsel anda tidak mendukung fitur NFC.",
                 positiveButton = "Tutup",
-                positiveClickListener = null
+                positiveClickListener = object : PopupDelegate {
+                    override fun onClick(popup: Popup, view: View) {
+                        delegate?.onClosePopup()
+                    }
+                }
             )
         }, {
             callback.invoke()
