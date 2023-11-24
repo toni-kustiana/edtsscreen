@@ -50,6 +50,10 @@ open class NfcFragment: BaseFragment<EdtsScreenFragmentNfcBinding>() {
                 startActivity(intent)
                 popup.dismiss()
             }
+
+            override fun onClosePopup() {
+                delegate?.onClosePopup()
+            }
         }
     }
 

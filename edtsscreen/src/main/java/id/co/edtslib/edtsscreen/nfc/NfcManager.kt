@@ -47,6 +47,7 @@ class NfcManager(private val activity: FragmentActivity, intent: Intent) {
                 positiveButton = "Tutup",
                 positiveClickListener = object : PopupDelegate {
                     override fun onClick(popup: Popup, view: View) {
+                        popup.dismiss()
                         delegate?.onClosePopup()
                     }
                 }

@@ -10,4 +10,5 @@ interface NfcDelegate {
      * */
     fun onNfcReceived(txBytes: ByteArray, rxBytes: ByteArray)
     fun keepTrayAfterScan(): Boolean
+    fun onClosePopup()
 }
