@@ -37,7 +37,7 @@ open class NfcFragment: BaseFragment<EdtsScreenFragmentNfcBinding>() {
                         val records = NdefMessageParser.parse(it)
                         delegate?.onNfcReceived(records)
                     }
-                }, 1500L)
+                }, 200L)
             }
 
             override fun onCommandReceived(txBytes: ByteArray, rxBytes: ByteArray) {
