@@ -47,6 +47,11 @@ class MainActivity : AppCompatActivity() {
             override fun onClosePopup() {
                 // do something
             }
+
+            override fun onCommandError(err: Exception?, message: String?) {
+                // log error
+            }
+
         }
         setupListener()
     }

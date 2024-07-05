@@ -11,4 +11,5 @@ interface NfcDelegate {
     fun onNfcReceived(txBytes: ByteArray, rxBytes: ByteArray)
     fun keepTrayAfterScan(): Boolean
     fun onClosePopup()
+    fun onCommandError(err: Exception?, message: String?)
 }

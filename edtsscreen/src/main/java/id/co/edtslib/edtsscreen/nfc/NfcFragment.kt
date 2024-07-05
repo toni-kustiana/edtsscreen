@@ -54,6 +54,10 @@ open class NfcFragment: BaseFragment<EdtsScreenFragmentNfcBinding>() {
             override fun onClosePopup() {
                 delegate?.onClosePopup()
             }
+
+            override fun onCommandError(err: Exception?, message: String?) {
+                delegate?.onCommandError(err, message)
+            }
         }
     }
 

@@ -26,6 +26,7 @@ class NfcManager(private val activity: FragmentActivity, intent: Intent) {
         fun onCommandReceived(txBytes: ByteArray, rxBytes: ByteArray)
         fun openSetting(popup: Popup)
         fun onClosePopup()
+        fun onCommandError(err: Exception?, message: String?)
     }
 
     private var nfcAdapter: NfcAdapter? = NfcAdapter.getDefaultAdapter(activity)
@@ -137,6 +138,7 @@ class NfcManager(private val activity: FragmentActivity, intent: Intent) {
             sendCommand(bytes)
         } else {
             Log.e("NfcManager", "NFC not connected")
+            delegate?.onCommandError(null, "NFC not connected")
         }
     }
 
@@ -151,6 +153,7 @@ class NfcManager(private val activity: FragmentActivity, intent: Intent) {
                 delegate?.onCommandReceived(bytes, lastBalanceBytes)
             } catch (err: Exception) {
                 Log.e("NfcManager", "error=${err.message}")
+                delegate?.onCommandError(err, err.message)
             }
         }
     }
