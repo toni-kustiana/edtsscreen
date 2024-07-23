@@ -11,10 +11,11 @@ import id.co.edtslib.edtsscreen.databinding.EdtsScreenFragmentNfcBinding
 import id.co.edtslib.edtsscreen.nfc.parser.NdefMessageParser
 import id.co.edtslib.uibase.BaseFragment
 
-open class NfcFragment: BaseFragment<EdtsScreenFragmentNfcBinding>() {
-    lateinit var nfcManager: NfcManager
+open class NfcFragment : BaseFragment<EdtsScreenFragmentNfcBinding>() {
 
+    lateinit var nfcManager: NfcManager
     var delegate: NfcDelegate? = null
+    var keepTrayAfterScan = false
 
     override val bindingInflater: (LayoutInflater, ViewGroup?, Boolean) -> EdtsScreenFragmentNfcBinding
         get() = EdtsScreenFragmentNfcBinding::inflate
@@ -24,7 +25,8 @@ open class NfcFragment: BaseFragment<EdtsScreenFragmentNfcBinding>() {
     override fun setup() {
         binding.bottomLayout.titleDivider = false
 
-        nfcManager = NfcManager(requireActivity(), Intent(requireActivity(), requireActivity().javaClass))
+        nfcManager =
+            NfcManager(requireActivity(), Intent(requireActivity(), requireActivity().javaClass))
         nfcManager.checkNfcFeature {
             binding.root.isVisible = true
         }
@@ -32,7 +34,7 @@ open class NfcFragment: BaseFragment<EdtsScreenFragmentNfcBinding>() {
             override fun onRead(messages: Array<NdefMessage?>) {
                 binding.root.isVisible = true
                 binding.root.postDelayed({
-                    binding.root.isVisible = delegate?.keepTrayAfterScan() == true
+                    binding.root.isVisible = keepTrayAfterScan
                     messages.forEach {
                         val records = NdefMessageParser.parse(it)
                         delegate?.onNfcReceived(records)
@@ -61,10 +63,8 @@ open class NfcFragment: BaseFragment<EdtsScreenFragmentNfcBinding>() {
         }
     }
 
-    fun process(intent: Intent?, bytes: ByteArray? = null) {
-        if (intent != null) {
-            nfcManager.processIntent(intent, bytes)
-        }
+    fun process(intent: Intent, command: ByteArray) {
+        nfcManager.processIntent(intent, command)
     }
 
     override fun onResume() {

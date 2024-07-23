@@ -19,6 +19,7 @@ import id.co.edtslib.edtsds.popup.PopupDelegate
 class NfcManager(private val activity: FragmentActivity, intent: Intent) {
     interface NfcManagerDelegate {
         fun onRead(messages: Array<NdefMessage?>)
+
         /**
          * txBytes: Byte Array of transmitter command
          * rxBytes: Byte Array of receiver result
@@ -34,10 +35,10 @@ class NfcManager(private val activity: FragmentActivity, intent: Intent) {
         activity, 0, intent
             .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP), PendingIntent.FLAG_MUTABLE
     )
-
-    var isoDep: IsoDep? = null
+    private var isoDep: IsoDep? = null
 
     var delegate: NfcManagerDelegate? = null
+    var timeout = 5000
 
     fun checkNfcFeature(callback: () -> Unit) {
         Utils.checkNfcStatus(nfcAdapter, {
@@ -77,26 +78,27 @@ class NfcManager(private val activity: FragmentActivity, intent: Intent) {
 
     fun dispatch() {
         //if (!nfcAdapter.isEnabled) showWirelessSettings()
-        nfcAdapter?.enableForegroundDispatch(activity,
+        nfcAdapter?.enableForegroundDispatch(
+            activity,
             pendingIntent,
             null,
-            null)
+            null
+        )
     }
 
-    fun processIntent(intent: Intent?, bytes: ByteArray? = null) {
-        if (intent != null) {
-            activity.intent = intent
-            resolveIntent(intent, bytes)
-        }
+    fun processIntent(intent: Intent, command: ByteArray) {
+        activity.intent = intent
+        resolveIntent(intent, command)
     }
 
     @Suppress("DEPRECATION")
-    private fun resolveIntent(intent: Intent, bytes: ByteArray? = null) {
+    private fun resolveIntent(intent: Intent, command: ByteArray) {
         val action = intent.action
 
         if (NfcAdapter.ACTION_TAG_DISCOVERED == action ||
             NfcAdapter.ACTION_TECH_DISCOVERED == action ||
-            NfcAdapter.ACTION_NDEF_DISCOVERED == action) {
+            NfcAdapter.ACTION_NDEF_DISCOVERED == action
+        ) {
             val rawMsgs = intent.getParcelableArrayExtra(NfcAdapter.EXTRA_NDEF_MESSAGES)
             val msgs: Array<NdefMessage?>
             if (rawMsgs != null) {
@@ -113,32 +115,50 @@ class NfcManager(private val activity: FragmentActivity, intent: Intent) {
                 if (tag != null) {
                     val nfcData = dumpTagData(tag)
 
-                    val record = NdefRecord(NdefRecord.TNF_UNKNOWN, empty, id, Gson().toJson(nfcData).toByteArray())
+                    val record = NdefRecord(
+                        NdefRecord.TNF_UNKNOWN,
+                        empty,
+                        id,
+                        Gson().toJson(nfcData).toByteArray()
+                    )
                     val msg = NdefMessage(arrayOf(record))
                     msgs = arrayOf(msg)
 
                     delegate?.onRead(msgs)
 
-                    if (bytes != null) {
-                        processIsoDep(tag, bytes)
-                    }
+                    processIsoDep(tag, command)
 
                 }
             }
         }
     }
 
-    fun processIsoDep(tag: Tag, bytes: ByteArray?) {
-        isoDep = IsoDep.get(tag)
-        isoDep?.connect()
-        isoDep?.timeout = 5000 // 5 sec time out
+    private fun connectToTag(isoDep: IsoDep): Boolean {
+        if (!isoDep.isConnected) {
+            try {
+                isoDep.connect()
+                isoDep.timeout = timeout  // 5 sec time out
+            } catch (e: Exception) {
+                e.printStackTrace()
+                Log.e("NfcManager", "Could not connect to tag")
+                delegate?.onCommandError(e, "TRANSMISSION_ERROR")
+                return false
+            }
 
-        val isConnected = isoDep?.isConnected
-        if (isConnected == true && bytes != null) {
-            sendCommand(bytes)
-        } else {
-            Log.e("NfcManager", "NFC not connected")
-            delegate?.onCommandError(null, "NFC not connected")
+        }
+        return true
+    }
+
+    private fun processIsoDep(tag: Tag, command: ByteArray) {
+        isoDep = IsoDep.get(tag)
+        isoDep?.let {
+            val isConnected = connectToTag(it)
+            if (isConnected) {
+                sendCommand(command)
+            } else {
+                Log.e("NfcManager", "NFC not connected")
+                delegate?.onCommandError(null, "NFC not connected")
+            }
         }
     }
 
@@ -146,15 +166,42 @@ class NfcManager(private val activity: FragmentActivity, intent: Intent) {
         isoDep?.close()
     }
 
-    fun sendCommand(bytes: ByteArray) {
+    fun sendCommand(command: ByteArray) {
         if (isoDep != null) {
             try {
-                val lastBalanceBytes = isoDep!!.transceive(bytes)
-                delegate?.onCommandReceived(bytes, lastBalanceBytes)
+                val apduResponse = isoDep!!.transceive(command)
+                delegate?.onCommandReceived(command, apduResponse)
             } catch (err: Exception) {
+                err.printStackTrace()
                 Log.e("NfcManager", "error=${err.message}")
                 delegate?.onCommandError(err, err.message)
             }
+        } else {
+            Log.e("NfcManager", "isoDep is null")
+            delegate?.onCommandError(null, "isoDep is null")
+        }
+    }
+
+    fun sendCommand(
+        command: ByteArray,
+        onSuccess: (command: ByteArray, response: ByteArray) -> Unit,
+        onError: (error: Exception?, message: String?) -> Unit
+    ) {
+        if (isoDep != null) {
+            try {
+                val apduResponse = isoDep!!.transceive(command)
+                delegate?.onCommandReceived(command, apduResponse)
+                onSuccess.invoke(command, apduResponse)
+            } catch (err: Exception) {
+                err.printStackTrace()
+                Log.e("NfcManager", "error=${err.message}")
+                delegate?.onCommandError(err, err.message)
+                onError.invoke(err, err.message)
+            }
+        } else {
+            Log.e("NfcManager", "isoDep is null")
+            delegate?.onCommandError(null, "isoDep is null")
+            onError.invoke(null, "isoDep is null")
         }
     }
 
@@ -164,11 +211,13 @@ class NfcManager(private val activity: FragmentActivity, intent: Intent) {
         val id = Utils.toDec(tag.id)
         val reversedId = Utils.toReversedDec(tag.id)
 
-        return NfcData(hex = hex,
+        return NfcData(
+            hex = hex,
             reversedHex = reversedHex,
             id = id,
             reversedId = reversedId,
-            techList = tag.techList.toList())
+            techList = tag.techList.toList()
+        )
         /*
         //tag.techList
 
