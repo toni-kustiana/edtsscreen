@@ -35,7 +35,7 @@ class NfcManager(private val activity: FragmentActivity, intent: Intent) {
         activity, 0, intent
             .addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP), PendingIntent.FLAG_MUTABLE
     )
-    private var isoDep: IsoDep? = null
+    var isoDep: IsoDep? = null
 
     var delegate: NfcManagerDelegate? = null
     var timeout = 5000

@@ -66,13 +66,13 @@ class MainActivity : AppCompatActivity() {
                     tvText2.text = String.format("apdu command bytes length less than 4")
                 }
 
-                nfcManager.sendCommand(Utils.hexToByteArray("00B500000A"), { command, response ->
+                /*nfcManager.sendCommand(Utils.hexToByteArray("00B500000A"), { command, response ->
                     tvText3.text = String.format(
                         "command=${command.contentToString()}\nresponse=${response.contentToString()}"
                     )
                 }, { err, message ->
                     tvText3.text = String.format("error=%s", err?.toString() ?: message)
-                })
+                })*/
             }
 
             override fun onClosePopup() {
@@ -109,8 +109,4 @@ class MainActivity : AppCompatActivity() {
 
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
-        nfcManager.closeConnection()
-    }
 }
