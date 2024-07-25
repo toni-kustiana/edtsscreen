@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/clDialog"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:layout_gravity="center"
+    android:orientation="vertical"
+    android:paddingHorizontal="@dimen/dimen_40dp"
+    android:paddingBottom="@dimen/dimen_16dp"
+    android:foregroundGravity="center">
+
+    <com.google.android.material.card.MaterialCardView
+        android:layout_gravity="center"
+        app:cardCornerRadius="@dimen/dimen_12dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+            <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/imageView"
+                android:scaleType="fitCenter"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"/>
+
+            <FrameLayout
+                android:layout_gravity="end"
+                android:layout_marginTop="@dimen/dimen_8dp"
+                android:layout_marginEnd="@dimen/dimen_8dp"
+                android:padding="@dimen/dimen_4dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content">
+                <androidx.appcompat.widget.AppCompatImageView
+                    android:id="@+id/ivClose"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    app:tint="@color/colorNeutral70"
+                    android:src="@drawable/ic_app_banner_close_round" />
+            </FrameLayout>
+        </FrameLayout>
+    </com.google.android.material.card.MaterialCardView>
+</FrameLayout>
