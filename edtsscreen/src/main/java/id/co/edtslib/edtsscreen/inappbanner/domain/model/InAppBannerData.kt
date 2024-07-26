@@ -9,7 +9,23 @@ data class InAppBannerData(
     val endDate:  String?,
     val duration: Int?,
     val record: Int?,
-    val deepLinkValue: String,
+    val deepLinkValue: String?,
     val interval: Int?,
-    val position: String
-)
+    val position: String?
+) {
+    companion object {
+        fun create(url: String?) = InAppBannerData(
+            id = "one",
+            event = null,
+            name = null,
+            image = url,
+            startDate = null,
+            endDate = null,
+            duration = null,
+            record = null,
+            deepLinkValue = null,
+            interval = null,
+            position = null
+        )
+    }
+}

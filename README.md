@@ -29,12 +29,12 @@ Here's a basic implementation.
 
 ```xml
     <androidx.fragment.app.FragmentContainerView
-        android:background="@color/colorOpacity"
-        android:fitsSystemWindows="true"
-        android:id="@+id/fragment_container_view"
-        android:name="id.co.edtslib.edtsscreen.nfc.NfcFragment"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+    android:background="@color/colorOpacity"
+    android:fitsSystemWindows="true"
+    android:id="@+id/fragment_container_view"
+    android:name="id.co.edtslib.edtsscreen.nfc.NfcFragment"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent" />
 ```
 ### Prerequisite
 
@@ -42,7 +42,7 @@ Add permission tag on your manifest
 
 ```xml
     <uses-permission android:name="android.permission.NFC" />
-    <uses-feature android:name="android.hardware.nfc" />
+<uses-feature android:name="android.hardware.nfc" />
 ```
 
 ### Implementation
@@ -51,16 +51,16 @@ On Activity Create
 
 ```kotlin
          val fragment = supportFragmentManager.findFragmentById(R.id.fragment_container_view) as NfcFragment
-        fragment.delegate = object : NfcDelegate {
-            override fun onNfcReceived(records: List<ParsedNdefRecord>) {
-                records.forEach {record ->
-                    val nfcData = NfcData.fromJson(record.str())
-                    if (nfcData?.id != null) {
-                        Toast.makeText(this@MainActivity, nfcData.toString(), Toast.LENGTH_SHORT).show()
-                    }
-                }
+fragment.delegate = object : NfcDelegate {
+    override fun onNfcReceived(records: List<ParsedNdefRecord>) {
+        records.forEach {record ->
+            val nfcData = NfcData.fromJson(record.str())
+            if (nfcData?.id != null) {
+                Toast.makeText(this@MainActivity, nfcData.toString(), Toast.LENGTH_SHORT).show()
             }
         }
+    }
+}
 
 ```
 
@@ -68,12 +68,12 @@ on Activity New Intent
 
 ```kotlin
     override fun onNewIntent(intent: Intent?) {
-        super.onNewIntent(intent)
+    super.onNewIntent(intent)
 
-        val fragment = supportFragmentManager.findFragmentById(R.id.fragment_container_view) as NfcFragment
-        fragment.process(intent)
+    val fragment = supportFragmentManager.findFragmentById(R.id.fragment_container_view) as NfcFragment
+    fragment.process(intent)
 
-    }
+}
 ```
 
 # ScanCodeFragment
@@ -107,8 +107,8 @@ Add config on app build gradle
 
 ```groovy
     configurations {
-        all*.exclude group: 'com.google.guava', module: 'listenablefuture'
-    }
+    all*.exclude group: 'com.google.guava', module: 'listenablefuture'
+}
 ```
 
 ### Implementation
@@ -127,4 +127,33 @@ fragment.delegate = object : ScanCodeDelegate {
 fragment.title = "Title"
 fragment.helper = "Scan Code by edts"
 
+```
+# InAppBannerDialog
+
+![InAppBannerDialog](https://i.ibb.co.com/NY3N3TB/2024-07-26-08-16-20.jpg)
+
+### Implementation
+Add in app banner module to Koin Module Configuration
+```kotlin
+object GroceryApp {
+    val modules = listOf(
+        inAppBannerModule
+    )
+}
+```
+
+Show In App Dialog
+```kotlin
+            InAppBannerDialog.show(
+                fragmentActivity = this@HomeV2Activity,
+                flowData = viewModel.getInAppBanner()
+            )
+```
+Define your view model
+```kotlin
+    fun getInAppBanner() = inAppBannerUseCase.get(
+        path = "notification/api/mobile/push-notification/getinapp",
+        client = "klikindomaret",
+        platform = "android"
+    )
 ```

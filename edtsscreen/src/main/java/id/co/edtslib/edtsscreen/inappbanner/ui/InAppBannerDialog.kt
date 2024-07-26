@@ -22,7 +22,7 @@ import org.koin.core.component.inject
 
 open class InAppBannerDialog(private val fragmentActivity: FragmentActivity,
                              private val flowData: Flow<Result<InAppBannerData?>>?): KoinComponent {
-    val inAppBannerUseCase: InAppBannerUseCase by inject()
+    private val inAppBannerUseCase: InAppBannerUseCase by inject()
 
     private var popup: Popup? = null
     private val binding = DialogInAppBannerBinding.inflate(LayoutInflater.from(fragmentActivity))
@@ -90,7 +90,7 @@ open class InAppBannerDialog(private val fragmentActivity: FragmentActivity,
     }
 
     @SuppressLint("CheckResult")
-    private fun showBanner(banner: InAppBannerData) {
+    fun showBanner(banner: InAppBannerData) {
         if (popup == null) {
             popup = Popup.showFullScreen(
                 view = binding.root)
@@ -142,7 +142,12 @@ open class InAppBannerDialog(private val fragmentActivity: FragmentActivity,
                  flowData: Flow<Result<InAppBannerData?>>) =
             InAppBannerDialog(
                 fragmentActivity = fragmentActivity,
-                flowData).show()
+                flowData = flowData).show()
+
+        fun show(fragmentActivity: FragmentActivity, url: String?) =
+            InAppBannerDialog(
+                fragmentActivity = fragmentActivity,
+                flowData = null).showBanner(InAppBannerData.create(url))
     }
 
 }
