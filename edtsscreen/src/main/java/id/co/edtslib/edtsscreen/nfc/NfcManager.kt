@@ -190,17 +190,14 @@ class NfcManager(private val activity: FragmentActivity, intent: Intent) {
         if (isoDep != null) {
             try {
                 val apduResponse = isoDep!!.transceive(command)
-                delegate?.onCommandReceived(command, apduResponse)
                 onSuccess.invoke(command, apduResponse)
             } catch (err: Exception) {
                 err.printStackTrace()
                 Log.e("NfcManager", "error=${err.message}")
-                delegate?.onCommandError(err, err.message)
                 onError.invoke(err, err.message)
             }
         } else {
             Log.e("NfcManager", "isoDep is null")
-            delegate?.onCommandError(null, "isoDep is null")
             onError.invoke(null, "isoDep is null")
         }
     }
