@@ -10,6 +10,7 @@ import com.bumptech.glide.Glide
 import id.co.edtslib.data.ProcessResult
 import id.co.edtslib.data.ProcessResultDelegate
 import id.co.edtslib.data.Result
+import id.co.edtslib.edtsds.R
 import id.co.edtslib.edtsds.popup.Popup
 import id.co.edtslib.edtsscreen.databinding.DialogInAppBannerBinding
 import id.co.edtslib.edtsscreen.inappbanner.domain.model.InAppBannerData
@@ -95,6 +96,7 @@ open class InAppBannerDialog(private val fragmentActivity: FragmentActivity,
             popup = Popup.showFullScreen(
                 view = binding.root)
             popup?.setOnDismissListener {
+                inAppBannerUseCase.show(banner)
                 popup = null
             }
         }
@@ -107,12 +109,15 @@ open class InAppBannerDialog(private val fragmentActivity: FragmentActivity,
             click(banner)
         }
 
-        inAppBannerUseCase.show(banner)
-
         popup?.show()
 
         binding.root.post {
-            Glide.with(fragmentActivity).load(banner.image).into(binding.imageView)
+            Glide.
+                with(fragmentActivity).
+                load(banner.image).
+                placeholder(R.drawable.ic_broken_banner).
+                error(R.drawable.ic_broken_banner).
+                into(binding.imageView)
         }
     }
 
