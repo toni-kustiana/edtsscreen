@@ -145,9 +145,9 @@ object GroceryApp {
 Show In App Dialog
 ```kotlin
             InAppBannerDialog.show(
-                fragmentActivity = this@HomeV2Activity,
-                flowData = viewModel.getInAppBanner()
-            )
+    fragmentActivity = this@HomeV2Activity,
+    flowData = viewModel.getInAppBanner()
+)
 ```
 Define your view model
 ```kotlin
@@ -156,4 +156,66 @@ Define your view model
         client = "klikindomaret",
         platform = "android"
     )
+```
+# CoachMarkView
+![CoachMarkView](https://i.ibb.co.com/2qQvC65/Screenshot-2024-07-27-at-9-09-10-PM.png)
+
+# Usage
+
+Here's a basic implementation.
+
+```xml
+    <id.co.edtslib.edtsscreen.coachmark.CoachMarkView
+        android:focusableInTouchMode="true"
+        android:focusable="true"
+        android:clickable="true"
+        android:id="@+id/coachMarkView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+```
+#### Model CoachData
+    rect: rectangle of coach mark view
+    imageResId: icon of coach mark view
+    title: title of coach mark view
+    sort: sort  of coach mark view
+    positiveText: text of button
+    trianglePosition: null if pointer center of coach mark view rectangle
+    shape: shape of coach mark view
+
+### Implementation
+
+Add coach mark item
+
+```kotlin
+        val rect = Rect()
+        binding.homeToolbar.tabLayout.getGlobalVisibleRect(rect)
+
+        binding.coachMarkView.add(
+            CoachData(
+                rect = rect,
+                imageResId = edts.klikidm.android.feature_home_v2.R.drawable.ic_coach_mark_3,
+                title = getString(edts.klikidm.android.feature_home_v2.R.string.coach_mark_3_title),
+                description = getString(edts.klikidm.android.feature_home_v2.R.string.coach_mark_3_description),
+                sort = 2,
+                alignInfo = CoachAlign.Bottom,
+                positiveText = getString(edts.klikidm.android.feature_home_v2.R.string.coach_mark_next),
+                trianglePosition = null,
+                shape = CoachShape.createRectangle(
+                    rad = resources.getDimensionPixelSize(edts.klikidm.android.core_resource.R.dimen.dimen_16dp)
+                )
+            )
+        )
+```
+Delegate of coach mark
+```kotlin
+binding.coachMarkView.delegate = object : CoachMarkDelegate {
+            override fun onClose() {
+                // to do 
+            }
+        }
+```
+
+Show coach mark
+```kotlin
+binding.coachMarkView.show(this)
 ```

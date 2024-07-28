@@ -115,8 +115,8 @@ open class InAppBannerDialog(private val fragmentActivity: FragmentActivity,
             Glide.
                 with(fragmentActivity).
                 load(banner.image).
-                placeholder(R.drawable.ic_broken_banner).
-                error(R.drawable.ic_broken_banner).
+                placeholder(R.drawable.ic_broken_product).
+                error(R.drawable.ic_broken_product).
                 into(binding.imageView)
         }
     }

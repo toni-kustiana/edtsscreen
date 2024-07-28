@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    <!-- left -->
+    <View
+        android:id="@+id/vLeft"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/vShape"
+        app:layout_constraintBottom_toBottomOf="parent"
+        android:background="@color/colorOpacity"
+        android:layout_width="0dp"
+        android:layout_height="0dp" />
+    <!-- top -->
+    <View
+        android:id="@+id/vTop"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toEndOf="@id/vLeft"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/vShape"
+        android:background="@color/colorOpacity"
+        android:layout_width="0dp"
+        android:layout_height="0dp" />
+    <!-- right -->
+    <View
+        android:id="@+id/vRight"
+        app:layout_constraintTop_toBottomOf="@id/vTop"
+        app:layout_constraintStart_toEndOf="@id/vShape"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        android:background="@color/colorOpacity"
+        android:layout_width="0dp"
+        android:layout_height="0dp" />
+    <!-- bottom -->
+    <View
+        android:id="@+id/vBottom"
+        app:layout_constraintTop_toBottomOf="@id/vShape"
+        app:layout_constraintStart_toEndOf="@id/vLeft"
+        app:layout_constraintEnd_toStartOf="@id/vRight"
+        app:layout_constraintBottom_toBottomOf="parent"
+        android:background="@color/colorOpacity"
+        android:layout_width="0dp"
+        android:layout_height="0dp" />
+    <id.co.edtslib.edtsscreen.coachmark.RoundRectView
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        android:id="@+id/vShape"
+        android:layout_width="0dp"
+        android:layout_height="0dp" />
+
+    <LinearLayout
+        android:id="@+id/llContent"
+        android:orientation="vertical"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        android:layout_marginStart="@dimen/dimen_16dp"
+        android:layout_marginEnd="@dimen/dimen_16dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/ivTriangle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/ic_coachmark_stamp" />
+        <com.google.android.material.card.MaterialCardView
+            app:cardBackgroundColor="@color/colorWhite"
+            app:cardCornerRadius="@dimen/dimen_12dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:padding="@dimen/dimen_16dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+                <androidx.appcompat.widget.AppCompatImageView
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    android:id="@+id/imageView"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/tvTitle"
+                    app:layout_constraintStart_toEndOf="@id/imageView"
+                    app:layout_constraintTop_toTopOf="parent"
+                    style="@style/H1"
+                    android:textColor="@color/colorNeutral70"
+                    android:layout_marginStart="@dimen/dimen_12dp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/tvDescription"
+                    app:layout_constraintStart_toStartOf="@id/tvTitle"
+                    app:layout_constraintTop_toBottomOf="@id/tvTitle"
+                    app:layout_constraintEnd_toStartOf="@id/ivCancel"
+                    android:layout_marginTop="@dimen/dimen_8dp"
+                    style="@style/B2"
+                    android:textColor="@color/colorNeutral60"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content" />
+                <View
+                    android:id="@+id/vBorder"
+                    android:layout_marginTop="@dimen/dimen_16dp"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/tvDescription"
+                    android:background="@color/colorNeutral20"
+                    android:layout_width="match_parent"
+                    android:layout_height="@dimen/dimen_1dp" />
+                <id.co.edtslib.edtsds.ButtonView
+                    android:layout_marginTop="@dimen/dimen_16dp"
+                    android:id="@+id/bvPositive"
+                    app:variant="primary"
+                    app:size="small"
+                    app:layout_constraintTop_toBottomOf="@id/vBorder"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    android:text="@string/coach_mark_next"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+                <id.co.edtslib.edtsds.ButtonView
+                    android:id="@+id/bvNegative"
+                    app:variant="custom"
+                    app:size="small"
+                    app:buttonBackground="@color/colorWhite"
+                    app:buttonTextColor="@color/colorPrimary30"
+                    app:layout_constraintTop_toTopOf="@id/bvPositive"
+                    app:layout_constraintEnd_toStartOf="@id/bvPositive"
+                    android:layout_marginEnd="@dimen/dimen_8dp"
+                    android:text="@string/coach_mark_prev"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+                <androidx.appcompat.widget.AppCompatTextView
+                    app:layout_constraintTop_toTopOf="@id/bvPositive"
+                    app:layout_constraintBottom_toBottomOf="@id/bvPositive"
+                    app:layout_constraintStart_toStartOf="parent"
+                    android:textColor="@color/colorNeutral70"
+                    style="@style/H4"
+                    android:id="@+id/tvCount"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent" />
+                <FrameLayout
+                    android:visibility="gone"
+                    android:id="@+id/ivCancel"
+                    android:layout_marginEnd="@dimen/dimen_2dp"
+                    android:layout_width="@dimen/dimen_24dp"
+                    android:layout_height="@dimen/dimen_24dp"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toTopOf="parent">
+
+                    <androidx.appcompat.widget.AppCompatImageView
+                        android:layout_width="@dimen/dimen_16dp"
+                        android:layout_height="@dimen/dimen_16dp"
+                        android:layout_gravity="center"
+                        app:tint="@color/colorNeutral70"
+                        android:src="@drawable/ic_cancel" />
+
+                </FrameLayout>
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+
+        </com.google.android.material.card.MaterialCardView>
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/ivTriangle180"
+            android:rotation="180"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/ic_coachmark_stamp" />
+    </LinearLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>
