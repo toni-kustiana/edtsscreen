@@ -98,6 +98,7 @@ open class InAppBannerDialog(private val fragmentActivity: FragmentActivity,
             popup?.setOnDismissListener {
                 inAppBannerUseCase.show(banner)
                 popup = null
+                dialog = null
             }
         }
 
@@ -143,16 +144,26 @@ open class InAppBannerDialog(private val fragmentActivity: FragmentActivity,
     }
 
     companion object {
+        private var dialog: InAppBannerDialog? = null
         fun show(fragmentActivity: FragmentActivity,
-                 flowData: Flow<Result<InAppBannerData?>>) =
-            InAppBannerDialog(
-                fragmentActivity = fragmentActivity,
-                flowData = flowData).show()
+                 flowData: Flow<Result<InAppBannerData?>>) {
+            if (dialog == null) {
+                dialog = InAppBannerDialog(
+                    fragmentActivity = fragmentActivity,
+                    flowData = flowData
+                ).show()
+            }
+        }
 
-        fun show(fragmentActivity: FragmentActivity, url: String?) =
-            InAppBannerDialog(
-                fragmentActivity = fragmentActivity,
-                flowData = null).showBanner(InAppBannerData.create(url))
+        fun show(fragmentActivity: FragmentActivity, url: String?) {
+            if (dialog == null) {
+                dialog = InAppBannerDialog(
+                    fragmentActivity = fragmentActivity,
+                    flowData = null
+                )
+                dialog?.showBanner(InAppBannerData.create(url))
+            }
+        }
     }
 
 }
