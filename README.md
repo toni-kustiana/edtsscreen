@@ -157,6 +157,14 @@ Define your view model
         platform = "android"
     )
 ```
+
+Add on your app pro guard
+
+```kotlin
+-keep public class id.co.edtslib.edtsscreen.inappbanner.data.mapper.**
+-keep public class id.co.edtslib.edtsscreen.inappbanner.domain.model.** { *; }
+```
+
 # CoachMarkView
 ![CoachMarkView](https://i.ibb.co.com/2qQvC65/Screenshot-2024-07-27-at-9-09-10-PM.png)
 
@@ -218,10 +226,4 @@ binding.coachMarkView.delegate = object : CoachMarkDelegate {
 Show coach mark
 ```kotlin
 binding.coachMarkView.show(this)
-```
-
-Proguard Setting
-```kotlin
--keep public class id.co.edtslib.edtsscreen.inappbanner.data.mapper.**
--keep public class id.co.edtslib.edtsscreen.inappbanner.domain.model.** { *; }
 ```
