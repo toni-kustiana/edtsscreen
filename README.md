@@ -219,3 +219,9 @@ Show coach mark
 ```kotlin
 binding.coachMarkView.show(this)
 ```
+
+Proguard Setting
+```kotlin
+-keep public class id.co.edtslib.edtsscreen.inappbanner.data.mapper.**
+-keep public class id.co.edtslib.edtsscreen.inappbanner.domain.model.** { *; }
+```
