@@ -11,6 +11,7 @@ import id.co.edtslib.data.source.remote.response.ApiResponse
 import id.co.edtslib.edtsscreen.inappbanner.data.mapper.InAppBannerMapper
 import id.co.edtslib.edtsscreen.inappbanner.data.source.local.InAppBannerListLocalData
 import id.co.edtslib.edtsscreen.inappbanner.data.source.local.InAppBannerShownLocalData
+import id.co.edtslib.edtsscreen.inappbanner.data.source.local.entity.InAppBannerShown
 import id.co.edtslib.edtsscreen.inappbanner.data.source.remote.InAppBannerRemoteDataSource
 import id.co.edtslib.edtsscreen.inappbanner.data.source.remote.response.InAppBannerContentResponse
 import id.co.edtslib.edtsscreen.inappbanner.domain.model.InAppBannerData
@@ -51,7 +52,6 @@ class InAppBannerRepository(private val localDataSource: HttpHeaderLocalSource,
             override fun getCached() = flow {
                 val data = Mappers.getMapper(InAppBannerMapper::class.java)
                     .inAppBannerEntityToModel(inAppBannerListLocal.getCached())
-                val shownList = inAppBannerShownLocal.getCached()?.toMutableList() ?: mutableListOf()
 
                 val bannerList = data?.filter {
                     val isExist = it.startDate?.isNotEmpty() == true && it.endDate?.isNotEmpty() == true
@@ -76,11 +76,31 @@ class InAppBannerRepository(private val localDataSource: HttpHeaderLocalSource,
                     else {
                         true
                     }
-                }?.filter {
-                   shownList.find { shown -> shown == it.id } == null
                 }?.sortedBy { it.endDate }
 
-                emit(if (bannerList?.isNotEmpty() == true) bannerList[0] else null)
+                val banner = if (bannerList?.isNotEmpty() == true) bannerList[0] else null
+                if (banner == null) {
+                    emit(null)
+                }
+                else {
+                    val latestShown = inAppBannerShownLocal.getCached()
+                    if (latestShown == null || latestShown.id != banner.id) {
+                        emit(banner)
+                    }
+                    else {
+                        val now = Date().time
+                        val nextShow = latestShown.time + (banner.interval ?: 0)*60*1000
+
+                        if (now >= nextShow) {
+                            emit(banner)
+                        }
+                        else (
+                            emit(null)
+                        )
+                    }
+                }
+
+
             }
 
             override fun shouldFetch(data: InAppBannerData?) = true
@@ -94,10 +114,10 @@ class InAppBannerRepository(private val localDataSource: HttpHeaderLocalSource,
 
     override fun show(banner: InAppBannerData) {
         if (banner.id != null) {
-            val shownList = inAppBannerShownLocal.getCached()?.toMutableList() ?: mutableListOf()
-            shownList.add(banner.id)
-
-            inAppBannerShownLocal.save(shownList)
+            inAppBannerShownLocal.save(InAppBannerShown(
+                id = banner.id,
+                time = Date().time
+            ))
         }
     }
 }

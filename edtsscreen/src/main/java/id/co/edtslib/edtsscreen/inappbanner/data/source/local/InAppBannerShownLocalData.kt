@@ -5,10 +5,11 @@ import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import id.co.edtslib.data.source.local.LocalDataSource
 import id.co.edtslib.edtsscreen.inappbanner.data.source.local.entity.InAppBannerEntity
+import id.co.edtslib.edtsscreen.inappbanner.data.source.local.entity.InAppBannerShown
 
 class InAppBannerShownLocalData(sharedPreference: SharedPreferences) :
-    LocalDataSource<List<String>?>(sharedPreference) {
-    override fun getKeyName(): String = "InAppBannerShown"
-    override fun getValue(json: String): List<String>? =
-        Gson().fromJson(json, object : TypeToken<List<String>?>() {}.type)
+    LocalDataSource<InAppBannerShown?>(sharedPreference) {
+    override fun getKeyName(): String = "InAppBannerLatestShown"
+    override fun getValue(json: String): InAppBannerShown? =
+        Gson().fromJson(json, object : TypeToken<InAppBannerShown?>() {}.type)
 }

@@ -147,7 +147,7 @@ open class InAppBannerDialog(private val fragmentActivity: FragmentActivity,
         private var dialog: InAppBannerDialog? = null
         fun show(fragmentActivity: FragmentActivity,
                  flowData: Flow<Result<InAppBannerData?>>) {
-            if (dialog == null) {
+            if (dialog?.popup == null) {
                 dialog = InAppBannerDialog(
                     fragmentActivity = fragmentActivity,
                     flowData = flowData
@@ -156,7 +156,7 @@ open class InAppBannerDialog(private val fragmentActivity: FragmentActivity,
         }
 
         fun show(fragmentActivity: FragmentActivity, url: String?) {
-            if (dialog == null) {
+            if (dialog?.popup == null) {
                 dialog = InAppBannerDialog(
                     fragmentActivity = fragmentActivity,
                     flowData = null
