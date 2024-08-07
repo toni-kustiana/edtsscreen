@@ -93,16 +93,10 @@ class InAppBannerRepository(private val localDataSource: HttpHeaderLocalSource,
                         else {
                             val interval = banner.interval ?: 0
                             if (interval > 0) {
-                                val now = Date().time
-                                val nextShowTime = shownBanner.time + interval * 60 * 1000
+                                val diff = (Date().time - shownBanner.time)/60000
 
                                 // format in minute
-                                val simpleDateFormat =
-                                    SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
-                                if (simpleDateFormat.format(now) == simpleDateFormat.format(
-                                        nextShowTime
-                                    )
-                                ) {
+                                if (diff >= 0 && diff % interval == 0L) {
                                     found = true
                                     emit(banner)
                                     break
@@ -133,15 +127,15 @@ class InAppBannerRepository(private val localDataSource: HttpHeaderLocalSource,
         if (banner.id != null) {
             val latestShownList = inAppBannerShownLocal.getCached()?.toMutableList() ?: mutableListOf()
             val shownBanner = latestShownList.find { it.id == banner.id }
-
+            val nextShowTime = Date().time + (banner.interval ?: 0)*60000
             if (shownBanner == null) {
                 latestShownList.add(InAppBannerShownEntity(
                     id = banner.id,
-                    time = Date().time
+                    time = Date().time + nextShowTime
                 ))
             }
             else {
-                shownBanner.time = Date().time
+                shownBanner.time = nextShowTime
             }
 
             inAppBannerShownLocal.save(latestShownList)
