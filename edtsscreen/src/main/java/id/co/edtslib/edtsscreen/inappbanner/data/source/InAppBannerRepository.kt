@@ -11,7 +11,7 @@ import id.co.edtslib.data.source.remote.response.ApiResponse
 import id.co.edtslib.edtsscreen.inappbanner.data.mapper.InAppBannerMapper
 import id.co.edtslib.edtsscreen.inappbanner.data.source.local.InAppBannerListLocalData
 import id.co.edtslib.edtsscreen.inappbanner.data.source.local.InAppBannerShownLocalData
-import id.co.edtslib.edtsscreen.inappbanner.data.source.local.entity.InAppBannerShown
+import id.co.edtslib.edtsscreen.inappbanner.data.source.local.entity.InAppBannerShownEntity
 import id.co.edtslib.edtsscreen.inappbanner.data.source.remote.InAppBannerRemoteDataSource
 import id.co.edtslib.edtsscreen.inappbanner.data.source.remote.response.InAppBannerContentResponse
 import id.co.edtslib.edtsscreen.inappbanner.domain.model.InAppBannerData
@@ -20,7 +20,9 @@ import id.co.edtslib.util.DateTimeUtil
 import kotlinx.coroutines.flow.flow
 import org.mapstruct.factory.Mappers
 import java.text.ParseException
+import java.text.SimpleDateFormat
 import java.util.Date
+import java.util.Locale
 
 class InAppBannerRepository(private val localDataSource: HttpHeaderLocalSource,
                             private val sessionRemoteDataSource: SessionRemoteDataSource,
@@ -78,29 +80,44 @@ class InAppBannerRepository(private val localDataSource: HttpHeaderLocalSource,
                     }
                 }?.sortedBy { it.endDate }
 
-                val banner = if (bannerList?.isNotEmpty() == true) bannerList[0] else null
-                if (banner == null) {
-                    emit(null)
+                if (bannerList?.isNotEmpty() == true) {
+                    var found = false
+                    val latestShownList = inAppBannerShownLocal.getCached()
+                    for (banner in bannerList) {
+                        val shownBanner = latestShownList?.find { it.id == banner.id }
+                        if (shownBanner == null) {
+                            found = true
+                            emit(banner)
+                            break
+                        }
+                        else {
+                            val interval = banner.interval ?: 0
+                            if (interval > 0) {
+                                val now = Date().time
+                                val nextShowTime = shownBanner.time + interval * 60 * 1000
+
+                                // format in minute
+                                val simpleDateFormat =
+                                    SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
+                                if (simpleDateFormat.format(now) == simpleDateFormat.format(
+                                        nextShowTime
+                                    )
+                                ) {
+                                    found = true
+                                    emit(banner)
+                                    break
+                                }
+                            }
+                        }
+                    }
+
+                    if (! found) {
+                        emit(null)
+                    }
                 }
                 else {
-                    val latestShown = inAppBannerShownLocal.getCached()
-                    if (latestShown == null || latestShown.id != banner.id) {
-                        emit(banner)
-                    }
-                    else {
-                        val now = Date().time
-                        val nextShow = latestShown.time + (banner.interval ?: 0)*60*1000
-
-                        if (now >= nextShow) {
-                            emit(banner)
-                        }
-                        else (
-                            emit(null)
-                        )
-                    }
+                    emit(null)
                 }
-
-
             }
 
             override fun shouldFetch(data: InAppBannerData?) = true
@@ -114,10 +131,20 @@ class InAppBannerRepository(private val localDataSource: HttpHeaderLocalSource,
 
     override fun show(banner: InAppBannerData) {
         if (banner.id != null) {
-            inAppBannerShownLocal.save(InAppBannerShown(
-                id = banner.id,
-                time = Date().time
-            ))
+            val latestShownList = inAppBannerShownLocal.getCached()?.toMutableList() ?: mutableListOf()
+            val shownBanner = latestShownList.find { it.id == banner.id }
+
+            if (shownBanner == null) {
+                latestShownList.add(InAppBannerShownEntity(
+                    id = banner.id,
+                    time = Date().time
+                ))
+            }
+            else {
+                shownBanner.time = Date().time
+            }
+
+            inAppBannerShownLocal.save(latestShownList)
         }
     }
 }

@@ -1,6 +1,6 @@
 package id.co.edtslib.edtsscreen.inappbanner.data.source.local.entity
 
-data class InAppBannerShown (
+data class InAppBannerShownEntity (
     val id: String,
-    val time: Long
+    var time: Long
 )
