@@ -131,7 +131,7 @@ class InAppBannerRepository(private val localDataSource: HttpHeaderLocalSource,
             if (shownBanner == null) {
                 latestShownList.add(InAppBannerShownEntity(
                     id = banner.id,
-                    time = Date().time + nextShowTime
+                    time = nextShowTime
                 ))
             }
             else {
