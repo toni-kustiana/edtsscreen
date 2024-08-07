@@ -30,7 +30,7 @@ open class InAppBannerDialog(private val fragmentActivity: FragmentActivity,
 
     var delegate: InAppBannerDelegate? = null
 
-    private fun show(): InAppBannerDialog {
+    private fun show() {
         fragmentActivity.lifecycleScope.launch {
             flowData?.collectLatest {
                 ProcessResult(
@@ -41,6 +41,7 @@ open class InAppBannerDialog(private val fragmentActivity: FragmentActivity,
                             message: String?,
                             data: InAppBannerData?
                         ) {
+                            dialog = null
                             delegate?.onError(
                                 code = code,
                                 message = message,
@@ -49,6 +50,7 @@ open class InAppBannerDialog(private val fragmentActivity: FragmentActivity,
                         }
 
                         override fun errorConnection() {
+                            dialog = null
                             delegate?.onError(
                                 code = "404",
                                 message = null,
@@ -57,6 +59,7 @@ open class InAppBannerDialog(private val fragmentActivity: FragmentActivity,
                         }
 
                         override fun errorSystem() {
+                            dialog = null
                             delegate?.onError(
                                 code = "503",
                                 message = null,
@@ -72,9 +75,13 @@ open class InAppBannerDialog(private val fragmentActivity: FragmentActivity,
                             if (data?.image?.isNotEmpty() == true) {
                                 showBanner(data)
                             }
+                            else {
+                                dialog = null
+                            }
                         }
 
                         override fun unAuthorize(message: String?) {
+                            dialog = null
                             delegate?.onError(
                                 code = "401",
                                 message = null,
@@ -86,8 +93,6 @@ open class InAppBannerDialog(private val fragmentActivity: FragmentActivity,
                     )
             }
         }
-
-        return this
     }
 
     @SuppressLint("CheckResult")
@@ -147,16 +152,17 @@ open class InAppBannerDialog(private val fragmentActivity: FragmentActivity,
         private var dialog: InAppBannerDialog? = null
         fun show(fragmentActivity: FragmentActivity,
                  flowData: Flow<Result<InAppBannerData?>>) {
-            if (dialog?.popup == null) {
+            if (dialog == null) {
                 dialog = InAppBannerDialog(
                     fragmentActivity = fragmentActivity,
                     flowData = flowData
-                ).show()
+                )
+                dialog?.show()
             }
         }
 
         fun show(fragmentActivity: FragmentActivity, url: String?) {
-            if (dialog?.popup == null) {
+            if (dialog == null) {
                 dialog = InAppBannerDialog(
                     fragmentActivity = fragmentActivity,
                     flowData = null
