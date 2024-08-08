@@ -8,7 +8,7 @@ import id.co.edtslib.edtsscreen.inappbanner.data.source.local.entity.InAppBanner
 
 class InAppBannerShownLocalData(sharedPreference: SharedPreferences) :
     LocalDataSource<List<InAppBannerShownEntity>?>(sharedPreference) {
-    override fun getKeyName(): String = "InAppBannerLatestShownList"
+    override fun getKeyName(): String = "InAppBannerLatestDisplayList"
     override fun getValue(json: String): List<InAppBannerShownEntity>? =
         Gson().fromJson(json, object : TypeToken<List<InAppBannerShownEntity>?>() {}.type)
 }

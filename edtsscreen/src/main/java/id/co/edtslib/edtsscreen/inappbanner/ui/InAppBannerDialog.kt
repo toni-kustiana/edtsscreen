@@ -2,15 +2,20 @@ package id.co.edtslib.edtsscreen.inappbanner.ui
 
 import android.annotation.SuppressLint
 import android.content.Intent
+import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.view.LayoutInflater
+import android.widget.FrameLayout
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.Glide
+import com.bumptech.glide.load.DataSource
+import com.bumptech.glide.load.engine.GlideException
+import com.bumptech.glide.request.RequestListener
+import com.bumptech.glide.request.target.Target
 import id.co.edtslib.data.ProcessResult
 import id.co.edtslib.data.ProcessResultDelegate
 import id.co.edtslib.data.Result
-import id.co.edtslib.edtsds.R
 import id.co.edtslib.edtsds.popup.Popup
 import id.co.edtslib.edtsscreen.databinding.DialogInAppBannerBinding
 import id.co.edtslib.edtsscreen.inappbanner.domain.model.InAppBannerData
@@ -22,7 +27,8 @@ import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 
 open class InAppBannerDialog(private val fragmentActivity: FragmentActivity,
-                             private val flowData: Flow<Result<InAppBannerData?>>?): KoinComponent {
+                             private val flowData: Flow<Result<InAppBannerData?>>?,
+                             private val dismissible: Boolean = false): KoinComponent {
     private val inAppBannerUseCase: InAppBannerUseCase by inject()
 
     private var popup: Popup? = null
@@ -99,11 +105,18 @@ open class InAppBannerDialog(private val fragmentActivity: FragmentActivity,
     fun showBanner(banner: InAppBannerData) {
         if (popup == null) {
             popup = Popup.showFullScreen(
-                view = binding.root)
+                view = binding.root,
+                dismissible = dismissible)
             popup?.setOnDismissListener {
                 inAppBannerUseCase.show(banner)
                 popup = null
                 dialog = null
+            }
+        }
+
+        binding.clDialog.setOnClickListener {
+            if (dismissible) {
+                close(banner)
             }
         }
 
@@ -121,10 +134,49 @@ open class InAppBannerDialog(private val fragmentActivity: FragmentActivity,
             Glide.
                 with(fragmentActivity).
                 load(banner.image).
-                placeholder(R.drawable.ic_broken_product).
-                error(R.drawable.ic_broken_product).
-                into(binding.imageView)
+                //placeholder(Util.shimmerDrawable).
+                listener(object : RequestListener<Drawable> {
+                    override fun onLoadFailed(
+                        e: GlideException?,
+                        model: Any?,
+                        target: Target<Drawable>?,
+                        isFirstResource: Boolean
+                    ): Boolean {
+                        close()
+                        return true
+                    }
+
+                    override fun onResourceReady(
+                        resource: Drawable?,
+                        model: Any?,
+                        target: Target<Drawable>?,
+                        dataSource: DataSource?,
+                        isFirstResource: Boolean
+                    ): Boolean {
+                        binding.imageView.post {
+                            if (resource != null) {
+                                val w = resource.intrinsicWidth
+                                val h = resource.intrinsicHeight
+
+                                val lp = binding.imageView.layoutParams as FrameLayout.LayoutParams
+                                lp.height = binding.imageView.width * h / w
+
+                                binding.imageView.setImageDrawable(resource)
+                            }
+                            else {
+                                close()
+                            }
+                        }
+
+                        return true
+                    }
+
+                }).submit()
         }
+    }
+
+    fun close() {
+        popup?.cancel()
     }
 
     protected open fun close(banner: InAppBannerData) {
@@ -151,11 +203,13 @@ open class InAppBannerDialog(private val fragmentActivity: FragmentActivity,
     companion object {
         private var dialog: InAppBannerDialog? = null
         fun show(fragmentActivity: FragmentActivity,
-                 flowData: Flow<Result<InAppBannerData?>>) {
+                 flowData: Flow<Result<InAppBannerData?>>,
+                 dismissible: Boolean = false) {
             if (dialog == null) {
                 dialog = InAppBannerDialog(
                     fragmentActivity = fragmentActivity,
-                    flowData = flowData
+                    flowData = flowData,
+                    dismissible = dismissible
                 )
                 dialog?.show()
             }

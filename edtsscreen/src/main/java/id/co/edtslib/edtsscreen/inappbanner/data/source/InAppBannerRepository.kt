@@ -20,9 +20,7 @@ import id.co.edtslib.util.DateTimeUtil
 import kotlinx.coroutines.flow.flow
 import org.mapstruct.factory.Mappers
 import java.text.ParseException
-import java.text.SimpleDateFormat
 import java.util.Date
-import java.util.Locale
 
 class InAppBannerRepository(private val localDataSource: HttpHeaderLocalSource,
                             private val sessionRemoteDataSource: SessionRemoteDataSource,
@@ -93,10 +91,10 @@ class InAppBannerRepository(private val localDataSource: HttpHeaderLocalSource,
                         else {
                             val interval = banner.interval ?: 0
                             if (interval > 0) {
-                                val diff = (Date().time - shownBanner.time)/60000
+                                val diff = (Date().time - shownBanner.nextShowTime)/60000
 
                                 // format in minute
-                                if (diff >= 0 && diff % interval == 0L) {
+                                if (diff >= 0) {
                                     found = true
                                     emit(banner)
                                     break
@@ -131,11 +129,11 @@ class InAppBannerRepository(private val localDataSource: HttpHeaderLocalSource,
             if (shownBanner == null) {
                 latestShownList.add(InAppBannerShownEntity(
                     id = banner.id,
-                    time = nextShowTime
+                    nextShowTime = nextShowTime
                 ))
             }
             else {
-                shownBanner.time = nextShowTime
+                shownBanner.nextShowTime = nextShowTime
             }
 
             inAppBannerShownLocal.save(latestShownList)
