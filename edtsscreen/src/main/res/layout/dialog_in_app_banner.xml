@@ -38,6 +38,20 @@
                     app:tint="@color/colorWhite"
                     android:src="@drawable/ic_app_banner_close_round" />
             </FrameLayout>
+            <FrameLayout
+                android:id="@+id/shimmerFrameLayout"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+                <com.facebook.shimmer.ShimmerFrameLayout
+                    app:shimmer_auto_start="true"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+                    <View
+                        android:background="@drawable/bg_shimmer_text"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent" />
+                </com.facebook.shimmer.ShimmerFrameLayout>
+            </FrameLayout>
         </FrameLayout>
     </com.google.android.material.card.MaterialCardView>
 </FrameLayout>

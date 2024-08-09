@@ -6,6 +6,7 @@ import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.view.LayoutInflater
 import android.widget.FrameLayout
+import androidx.core.view.isVisible
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.Glide
@@ -16,6 +17,7 @@ import com.bumptech.glide.request.target.Target
 import id.co.edtslib.data.ProcessResult
 import id.co.edtslib.data.ProcessResultDelegate
 import id.co.edtslib.data.Result
+import id.co.edtslib.edtsds.Util
 import id.co.edtslib.edtsds.popup.Popup
 import id.co.edtslib.edtsscreen.databinding.DialogInAppBannerBinding
 import id.co.edtslib.edtsscreen.inappbanner.domain.model.InAppBannerData
@@ -131,10 +133,13 @@ open class InAppBannerDialog(private val fragmentActivity: FragmentActivity,
         popup?.show()
 
         binding.root.post {
+            val lpShimmer = binding.shimmerFrameLayout.layoutParams as FrameLayout.LayoutParams
+            lpShimmer.height = (binding.shimmerFrameLayout.width * 1.14).toInt()
+            binding.shimmerFrameLayout.layoutParams = lpShimmer
+
             Glide.
                 with(fragmentActivity).
                 load(banner.image).
-                //placeholder(Util.shimmerDrawable).
                 listener(object : RequestListener<Drawable> {
                     override fun onLoadFailed(
                         e: GlideException?,
@@ -162,6 +167,7 @@ open class InAppBannerDialog(private val fragmentActivity: FragmentActivity,
                                 lp.height = binding.imageView.width * h / w
 
                                 binding.imageView.setImageDrawable(resource)
+                                binding.shimmerFrameLayout.isVisible = false
                             }
                             else {
                                 close()
