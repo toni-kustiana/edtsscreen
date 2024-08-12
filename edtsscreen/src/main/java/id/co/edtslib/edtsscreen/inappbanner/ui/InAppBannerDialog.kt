@@ -2,6 +2,9 @@ package id.co.edtslib.edtsscreen.inappbanner.ui
 
 import android.annotation.SuppressLint
 import android.content.Intent
+import android.graphics.Color
+import android.graphics.Rect
+import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.view.LayoutInflater
@@ -17,7 +20,6 @@ import com.bumptech.glide.request.target.Target
 import id.co.edtslib.data.ProcessResult
 import id.co.edtslib.data.ProcessResultDelegate
 import id.co.edtslib.data.Result
-import id.co.edtslib.edtsds.Util
 import id.co.edtslib.edtsds.popup.Popup
 import id.co.edtslib.edtsscreen.databinding.DialogInAppBannerBinding
 import id.co.edtslib.edtsscreen.inappbanner.domain.model.InAppBannerData
@@ -168,6 +170,22 @@ open class InAppBannerDialog(private val fragmentActivity: FragmentActivity,
 
                                 binding.imageView.setImageDrawable(resource)
                                 binding.shimmerFrameLayout.isVisible = false
+
+                                binding.imageView.post {
+                                    if (binding.imageView.drawable is BitmapDrawable) {
+                                        val rect = Rect()
+                                        binding.ivClose.getLocalVisibleRect(rect)
+
+                                        val bitmapDrawable = binding.imageView.drawable as BitmapDrawable
+                                        val pixel = bitmapDrawable.bitmap.getPixel(rect.left, rect.top)
+
+                                        val r = Color.red(pixel)
+                                        val g = Color.green(pixel)
+                                        val b = Color.blue(pixel)
+
+                                        binding.ivClose.isActivated = r > 0xAA && g > 0xAA && b > 0xAA
+                                    }
+                                }
                             }
                             else {
                                 close()
