@@ -16,6 +16,8 @@ import id.co.edtslib.edtsscreen.inappbanner.data.source.remote.InAppBannerRemote
 import id.co.edtslib.edtsscreen.inappbanner.data.source.remote.response.InAppBannerContentResponse
 import id.co.edtslib.edtsscreen.inappbanner.domain.model.InAppBannerData
 import id.co.edtslib.edtsscreen.inappbanner.domain.repository.IInAppBannerRepository
+import id.co.edtslib.edtsscreen.inappbanner.ui.InAppConfig
+import id.co.edtslib.edtsscreen.inappbanner.ui.TimeLimitation
 import id.co.edtslib.util.DateTimeUtil
 import kotlinx.coroutines.flow.flow
 import org.mapstruct.factory.Mappers
@@ -62,7 +64,20 @@ class InAppBannerRepository(private val localDataSource: HttpHeaderLocalSource,
                             if (startDate != null && endDate != null) {
                                 val time = Date().time
 
-                                time >= startDate.time && time <= endDate.time
+                                when (InAppConfig.timeLimitation) {
+                                    TimeLimitation.StartTime -> {
+                                        time >= startDate.time
+                                    }
+                                    TimeLimitation.EndTime -> {
+                                        time <= endDate.time
+                                    }
+                                    TimeLimitation.No -> {
+                                        true
+                                    }
+                                    else -> {
+                                        time >= startDate.time && time <= endDate.time
+                                    }
+                                }
                             }
                             else {
                                 false
