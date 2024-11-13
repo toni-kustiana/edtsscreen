@@ -9,6 +9,7 @@ import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.view.LayoutInflater
 import android.widget.FrameLayout
+import android.widget.Toast
 import androidx.core.view.isVisible
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.lifecycleScope
@@ -217,10 +218,15 @@ open class InAppBannerDialog(private val fragmentActivity: FragmentActivity,
             else {
                 "https://${banner.deepLinkValue}"
             }
-            val intent = Intent(Intent.ACTION_VIEW)
-            intent.data = Uri.parse(url)
-            fragmentActivity.startActivity(intent)
-            popup?.cancel()
+            try {
+                val intent = Intent(Intent.ACTION_VIEW)
+                intent.data = Uri.parse(url)
+                fragmentActivity.startActivity(intent)
+                popup?.cancel()
+            }
+            catch (e: Exception) {
+                Toast.makeText(fragmentActivity, "Unknown Intent $url", Toast.LENGTH_LONG).show()
+            }
         }
     }
 
