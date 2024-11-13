@@ -2,5 +2,5 @@
 <resources>
     <string name="coach_mark_next">Selanjutnya</string>
     <string name="coach_mark_prev">Sebelumnya</string>
-    <string name="coach_mark_n_from">%d dari %d</string>
+    <string name="coach_mark_n_from" formatted="false">%d dari %d</string>
 </resources>

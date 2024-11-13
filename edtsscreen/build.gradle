@@ -6,7 +6,7 @@ plugins {
 }
 
 group = 'id.co.edtslib.edtsscreen'
-version = '1.0.0'
+version = '1.4.7-rev1'
 
 afterEvaluate {
     publishing {
@@ -16,7 +16,7 @@ afterEvaluate {
                 from components.release
                 groupId = 'id.co.edtslib.edtsscreen'
                 artifactId = 'edtsscreen'
-                version = '1.0.0'
+                version = '1.4.7-rev1'
             }
         }
     }
@@ -41,11 +41,11 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_18
-        targetCompatibility JavaVersion.VERSION_18
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
     }
     kotlinOptions {
-        jvmTarget = '18'
+        jvmTarget = '17'
     }
 
     buildFeatures {
