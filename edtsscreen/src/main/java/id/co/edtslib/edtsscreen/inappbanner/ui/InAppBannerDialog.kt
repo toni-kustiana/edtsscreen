@@ -140,63 +140,70 @@ open class InAppBannerDialog(private val fragmentActivity: FragmentActivity,
             lpShimmer.height = (binding.shimmerFrameLayout.width * 1.14).toInt()
             binding.shimmerFrameLayout.layoutParams = lpShimmer
 
-            Glide.
-                with(fragmentActivity).
-                load(banner.image).
-                listener(object : RequestListener<Drawable> {
-                    override fun onLoadFailed(
-                        e: GlideException?,
-                        model: Any?,
-                        target: Target<Drawable>?,
-                        isFirstResource: Boolean
-                    ): Boolean {
-                        close()
-                        return true
-                    }
-
-                    override fun onResourceReady(
-                        resource: Drawable?,
-                        model: Any?,
-                        target: Target<Drawable>?,
-                        dataSource: DataSource?,
-                        isFirstResource: Boolean
-                    ): Boolean {
-                        binding.imageView.post {
-                            if (resource != null) {
-                                val w = resource.intrinsicWidth
-                                val h = resource.intrinsicHeight
-
-                                val lp = binding.imageView.layoutParams as FrameLayout.LayoutParams
-                                lp.height = binding.imageView.width * h / w
-
-                                binding.imageView.setImageDrawable(resource)
-                                binding.shimmerFrameLayout.isVisible = false
-
-                                binding.imageView.post {
-                                    if (binding.imageView.drawable is BitmapDrawable) {
-                                        val rect = Rect()
-                                        binding.ivClose.getLocalVisibleRect(rect)
-
-                                        val bitmapDrawable = binding.imageView.drawable as BitmapDrawable
-                                        val pixel = bitmapDrawable.bitmap.getPixel(rect.left, rect.top)
-
-                                        val r = Color.red(pixel)
-                                        val g = Color.green(pixel)
-                                        val b = Color.blue(pixel)
-
-                                        binding.ivClose.isActivated = r > 0xAA && g > 0xAA && b > 0xAA
-                                    }
-                                }
-                            }
-                            else {
-                                close()
-                            }
+            if (! fragmentActivity.isDestroyed) {
+                try {
+                    Glide.
+                    with(fragmentActivity).
+                    load(banner.image).
+                    listener(object : RequestListener<Drawable> {
+                        override fun onLoadFailed(
+                            e: GlideException?,
+                            model: Any?,
+                            target: Target<Drawable>?,
+                            isFirstResource: Boolean
+                        ): Boolean {
+                            close()
+                            return true
                         }
 
-                        return true
-                    }
+                        override fun onResourceReady(
+                            resource: Drawable?,
+                            model: Any?,
+                            target: Target<Drawable>?,
+                            dataSource: DataSource?,
+                            isFirstResource: Boolean
+                        ): Boolean {
+                            binding.imageView.post {
+                                if (resource != null) {
+                                    val w = resource.intrinsicWidth
+                                    val h = resource.intrinsicHeight
 
-                }).submit()
+                                    val lp = binding.imageView.layoutParams as FrameLayout.LayoutParams
+                                    lp.height = binding.imageView.width * h / w
+
+                                    binding.imageView.setImageDrawable(resource)
+                                    binding.shimmerFrameLayout.isVisible = false
+
+                                    binding.imageView.post {
+                                        if (binding.imageView.drawable is BitmapDrawable) {
+                                            val rect = Rect()
+                                            binding.ivClose.getLocalVisibleRect(rect)
+
+                                            val bitmapDrawable = binding.imageView.drawable as BitmapDrawable
+                                            val pixel = bitmapDrawable.bitmap.getPixel(rect.left, rect.top)
+
+                                            val r = Color.red(pixel)
+                                            val g = Color.green(pixel)
+                                            val b = Color.blue(pixel)
+
+                                            binding.ivClose.isActivated = r > 0xAA && g > 0xAA && b > 0xAA
+                                        }
+                                    }
+                                }
+                                else {
+                                    close()
+                                }
+                            }
+
+                            return true
+                        }
+
+                    }).submit()
+                }
+                catch (ignore: Exception) {
+
+                }
+            }
         }
     }
 
