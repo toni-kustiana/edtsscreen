@@ -33,33 +33,39 @@ class RoundRectView: AppCompatImageView {
     override fun onDraw(canvas: Canvas?) {
         super.onDraw(canvas)
 
-        val outerBitmap = Bitmap.createBitmap(width, height, Config.ARGB_8888)
-        val outerCanvas = Canvas(outerBitmap)
-        val outerPaint = Paint()
-        outerPaint.setColor(ContextCompat.getColor(context, R.color.colorOpacity))
+        if (width > 0 && height > 0) {
+            val outerBitmap = Bitmap.createBitmap(width, height, Config.ARGB_8888)
+            val outerCanvas = Canvas(outerBitmap)
+            val outerPaint = Paint()
+            outerPaint.setColor(ContextCompat.getColor(context, R.color.colorOpacity))
 
-        val innerPaint = Paint()
-        innerPaint.setColor(Color.TRANSPARENT)
-        innerPaint.setXfermode(PorterDuffXfermode(PorterDuff.Mode.CLEAR))
+            val innerPaint = Paint()
+            innerPaint.setColor(Color.TRANSPARENT)
+            innerPaint.setXfermode(PorterDuffXfermode(PorterDuff.Mode.CLEAR))
 
-        val round = (shape?.radius ?: 0).toFloat()
+            val round = (shape?.radius ?: 0).toFloat()
 
-        outerCanvas.drawRect(0f, 0f, width.toFloat(), height.toFloat(), outerPaint)
-        if (shape?.type == CoachShapeType.Circle) {
-            outerCanvas.drawCircle((width/2).toFloat(), (height/2).toFloat(), (width/2).toFloat(), innerPaint)
+            outerCanvas.drawRect(0f, 0f, width.toFloat(), height.toFloat(), outerPaint)
+            if (shape?.type == CoachShapeType.Circle) {
+                outerCanvas.drawCircle(
+                    (width / 2).toFloat(),
+                    (height / 2).toFloat(),
+                    (width / 2).toFloat(),
+                    innerPaint
+                )
+            } else {
+                outerCanvas.drawRoundRect(
+                    0f,
+                    0f,
+                    width.toFloat(),
+                    height.toFloat(),
+                    round,
+                    round,
+                    innerPaint
+                )
+            }
+            canvas?.drawBitmap(outerBitmap, 0f, 0f, Paint())
         }
-        else {
-            outerCanvas.drawRoundRect(
-                0f,
-                0f,
-                width.toFloat(),
-                height.toFloat(),
-                round,
-                round,
-                innerPaint
-            )
-        }
-        canvas?.drawBitmap(outerBitmap, 0f, 0f, Paint())
     }
 
 }
