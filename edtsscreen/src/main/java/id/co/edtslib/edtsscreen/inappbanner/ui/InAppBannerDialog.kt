@@ -180,13 +180,19 @@ open class InAppBannerDialog(private val fragmentActivity: FragmentActivity,
                                             binding.ivClose.getLocalVisibleRect(rect)
 
                                             val bitmapDrawable = binding.imageView.drawable as BitmapDrawable
-                                            val pixel = bitmapDrawable.bitmap.getPixel(rect.left, rect.top)
+                                            if (! bitmapDrawable.bitmap.isRecycled) {
+                                                val pixel = bitmapDrawable.bitmap.getPixel(
+                                                    rect.left,
+                                                    rect.top
+                                                )
 
-                                            val r = Color.red(pixel)
-                                            val g = Color.green(pixel)
-                                            val b = Color.blue(pixel)
+                                                val r = Color.red(pixel)
+                                                val g = Color.green(pixel)
+                                                val b = Color.blue(pixel)
 
-                                            binding.ivClose.isActivated = r > 0xAA && g > 0xAA && b > 0xAA
+                                                binding.ivClose.isActivated =
+                                                    r > 0xAA && g > 0xAA && b > 0xAA
+                                            }
                                         }
                                     }
                                 }
