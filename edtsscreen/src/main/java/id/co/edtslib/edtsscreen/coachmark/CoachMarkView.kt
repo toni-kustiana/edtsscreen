@@ -13,7 +13,7 @@ import androidx.fragment.app.FragmentActivity
 import id.co.edtslib.edtsscreen.R
 import id.co.edtslib.edtsscreen.databinding.ViewCoachMarkBinding
 
-class CoachMarkView: FrameLayout {
+open class CoachMarkView: FrameLayout {
     constructor(context: Context) : super(context)
     constructor(context: Context, attrs: AttributeSet?) : super(context, attrs)
     constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : super(
@@ -24,8 +24,8 @@ class CoachMarkView: FrameLayout {
 
     var delegate: CoachMarkDelegate? = null
 
-    private lateinit var activity: FragmentActivity
-    private var selectedIndex = 0
+    protected lateinit var activity: FragmentActivity
+    protected var selectedIndex = 0
         set(value) {
             field = value
 
@@ -34,10 +34,10 @@ class CoachMarkView: FrameLayout {
                 draw(index)
             }
         }
-    private val binding = ViewCoachMarkBinding.inflate(LayoutInflater.from(context), this, true)
-    private var contentLeftMargin = 0
+    protected val binding = ViewCoachMarkBinding.inflate(LayoutInflater.from(context), this, true)
+    protected var contentLeftMargin = 0
 
-    private val list = mutableListOf<CoachData>()
+    protected val list = mutableListOf<CoachData>()
 
     init {
         if (! isInEditMode) {
@@ -83,7 +83,7 @@ class CoachMarkView: FrameLayout {
         }
     }
 
-    private fun draw(index: Int) {
+    protected open fun draw(index: Int) {
         isVisible = true
 
         val coachData = list[index]
