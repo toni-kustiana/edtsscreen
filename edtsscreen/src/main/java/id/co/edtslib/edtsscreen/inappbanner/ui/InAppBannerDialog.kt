@@ -6,7 +6,6 @@ import android.graphics.Color
 import android.graphics.Rect
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
-import android.net.Uri
 import android.view.LayoutInflater
 import android.widget.FrameLayout
 import android.widget.Toast
@@ -30,10 +29,14 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
+import androidx.core.net.toUri
+import androidx.core.graphics.get
 
-open class InAppBannerDialog(private val fragmentActivity: FragmentActivity,
-                             private val flowData: Flow<Result<InAppBannerData?>>?,
-                             private val dismissible: Boolean = false): KoinComponent {
+open class InAppBannerDialog(
+    private val fragmentActivity: FragmentActivity,
+    private val flowData: Flow<Result<InAppBannerData?>>?,
+    private val dismissible: Boolean = false
+) : KoinComponent {
     private val inAppBannerUseCase: InAppBannerUseCase by inject()
 
     private var popup: Popup? = null
@@ -85,8 +88,7 @@ open class InAppBannerDialog(private val fragmentActivity: FragmentActivity,
                         override fun success(data: InAppBannerData?) {
                             if (data?.image?.isNotEmpty() == true) {
                                 showBanner(data)
-                            }
-                            else {
+                            } else {
                                 dialog = null
                             }
                         }
@@ -101,7 +103,7 @@ open class InAppBannerDialog(private val fragmentActivity: FragmentActivity,
                         }
                     }
 
-                    )
+                )
             }
         }
     }
@@ -111,7 +113,8 @@ open class InAppBannerDialog(private val fragmentActivity: FragmentActivity,
         if (popup == null) {
             popup = Popup.showFullScreen(
                 view = binding.root,
-                dismissible = dismissible)
+                dismissible = dismissible
+            )
             popup?.setOnDismissListener {
                 inAppBannerUseCase.show(banner)
                 popup = null
@@ -140,73 +143,69 @@ open class InAppBannerDialog(private val fragmentActivity: FragmentActivity,
             lpShimmer.height = (binding.shimmerFrameLayout.width * 1.14).toInt()
             binding.shimmerFrameLayout.layoutParams = lpShimmer
 
-            if (! fragmentActivity.isDestroyed) {
+            if (!fragmentActivity.isDestroyed) {
                 try {
-                    Glide.
-                    with(fragmentActivity).
-                    load(banner.image).
-                    listener(object : RequestListener<Drawable> {
-                        override fun onLoadFailed(
-                            e: GlideException?,
-                            model: Any?,
-                            target: Target<Drawable>?,
-                            isFirstResource: Boolean
-                        ): Boolean {
-                            close()
-                            return true
-                        }
-
-                        override fun onResourceReady(
-                            resource: Drawable?,
-                            model: Any?,
-                            target: Target<Drawable>?,
-                            dataSource: DataSource?,
-                            isFirstResource: Boolean
-                        ): Boolean {
-                            binding.imageView.post {
-                                if (resource != null) {
-                                    val w = resource.intrinsicWidth
-                                    val h = resource.intrinsicHeight
-
-                                    val lp = binding.imageView.layoutParams as FrameLayout.LayoutParams
-                                    lp.height = binding.imageView.width * h / w
-
-                                    binding.imageView.setImageDrawable(resource)
-                                    binding.shimmerFrameLayout.isVisible = false
-
-                                    binding.imageView.post {
-                                        if (binding.imageView.drawable is BitmapDrawable) {
-                                            val rect = Rect()
-                                            binding.ivClose.getLocalVisibleRect(rect)
-
-                                            val bitmapDrawable = binding.imageView.drawable as BitmapDrawable
-                                            if (! bitmapDrawable.bitmap.isRecycled) {
-                                                val pixel = bitmapDrawable.bitmap.getPixel(
-                                                    rect.left,
-                                                    rect.top
-                                                )
-
-                                                val r = Color.red(pixel)
-                                                val g = Color.green(pixel)
-                                                val b = Color.blue(pixel)
-
-                                                binding.ivClose.isActivated =
-                                                    r > 0xAA && g > 0xAA && b > 0xAA
-                                            }
-                                        }
-                                    }
-                                }
-                                else {
-                                    close()
-                                }
+                    Glide.with(fragmentActivity).load(banner.image)
+                        .listener(object : RequestListener<Drawable> {
+                            override fun onLoadFailed(
+                                e: GlideException?,
+                                model: Any?,
+                                target: Target<Drawable>?,
+                                isFirstResource: Boolean
+                            ): Boolean {
+                                close()
+                                return true
                             }
 
-                            return true
-                        }
+                            override fun onResourceReady(
+                                resource: Drawable?,
+                                model: Any?,
+                                target: Target<Drawable>?,
+                                dataSource: DataSource?,
+                                isFirstResource: Boolean
+                            ): Boolean {
+                                binding.imageView.post {
+                                    if (resource != null) {
+                                        val w = resource.intrinsicWidth
+                                        val h = resource.intrinsicHeight
 
-                    }).submit()
-                }
-                catch (ignore: Exception) {
+                                        val lp =
+                                            binding.imageView.layoutParams as FrameLayout.LayoutParams
+                                        lp.height = binding.imageView.width * h / w
+
+                                        binding.imageView.setImageDrawable(resource)
+                                        binding.shimmerFrameLayout.isVisible = false
+
+                                        binding.imageView.post {
+                                            if (binding.imageView.drawable is BitmapDrawable) {
+                                                val rect = Rect()
+                                                binding.ivClose.getLocalVisibleRect(rect)
+
+                                                val bitmapDrawable =
+                                                    binding.imageView.drawable as BitmapDrawable
+                                                if (!bitmapDrawable.bitmap.isRecycled) {
+                                                    val pixel = bitmapDrawable.bitmap[rect.left, rect.top]
+
+                                                    val r = Color.red(pixel)
+                                                    val g = Color.green(pixel)
+                                                    val b = Color.blue(pixel)
+
+                                                    binding.ivClose.isActivated =
+                                                        r > 0xAA && g > 0xAA && b > 0xAA
+                                                    delegate?.onShown(banner)
+                                                }
+                                            }
+                                        }
+                                    } else {
+                                        close()
+                                    }
+                                }
+
+                                return true
+                            }
+
+                        }).submit()
+                } catch (_: Exception) {
 
                 }
             }
@@ -223,21 +222,20 @@ open class InAppBannerDialog(private val fragmentActivity: FragmentActivity,
     }
 
     protected open fun click(banner: InAppBannerData?) {
+        delegate?.onClick(banner)
         if (banner?.deepLinkValue?.isNotEmpty() == true) {
-            val uri = Uri.parse(banner.deepLinkValue)
+            val uri = banner.deepLinkValue.toUri()
             val url = if (uri.scheme?.isNotEmpty() == true) {
                 banner.deepLinkValue
-            }
-            else {
+            } else {
                 "https://${banner.deepLinkValue}"
             }
             try {
                 val intent = Intent(Intent.ACTION_VIEW)
-                intent.data = Uri.parse(url)
+                intent.data = url.toUri()
                 fragmentActivity.startActivity(intent)
                 popup?.cancel()
-            }
-            catch (e: Exception) {
+            } catch (_: Exception) {
                 Toast.makeText(fragmentActivity, "Unknown Intent $url", Toast.LENGTH_LONG).show()
             }
         }
@@ -245,9 +243,11 @@ open class InAppBannerDialog(private val fragmentActivity: FragmentActivity,
 
     companion object {
         private var dialog: InAppBannerDialog? = null
-        fun show(fragmentActivity: FragmentActivity,
-                 flowData: Flow<Result<InAppBannerData?>>,
-                 dismissible: Boolean = false) {
+        fun show(
+            fragmentActivity: FragmentActivity,
+            flowData: Flow<Result<InAppBannerData?>>,
+            dismissible: Boolean = false
+        ) {
             if (dialog == null) {
                 dialog = InAppBannerDialog(
                     fragmentActivity = fragmentActivity,
