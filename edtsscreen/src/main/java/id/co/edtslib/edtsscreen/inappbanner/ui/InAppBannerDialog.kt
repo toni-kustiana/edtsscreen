@@ -6,7 +6,6 @@ import android.graphics.Color
 import android.graphics.Rect
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
-import android.net.Uri
 import android.view.LayoutInflater
 import android.widget.FrameLayout
 import android.widget.Toast
@@ -30,6 +29,8 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
+import androidx.core.net.toUri
+import androidx.core.graphics.get
 
 open class InAppBannerDialog(private val fragmentActivity: FragmentActivity,
                              private val flowData: Flow<Result<InAppBannerData?>>?,
@@ -181,10 +182,8 @@ open class InAppBannerDialog(private val fragmentActivity: FragmentActivity,
 
                                             val bitmapDrawable = binding.imageView.drawable as BitmapDrawable
                                             if (! bitmapDrawable.bitmap.isRecycled) {
-                                                val pixel = bitmapDrawable.bitmap.getPixel(
-                                                    rect.left,
-                                                    rect.top
-                                                )
+                                                val pixel =
+                                                    bitmapDrawable.bitmap[rect.left, rect.top]
 
                                                 val r = Color.red(pixel)
                                                 val g = Color.green(pixel)
@@ -195,6 +194,7 @@ open class InAppBannerDialog(private val fragmentActivity: FragmentActivity,
                                             }
                                         }
                                     }
+                                    delegate?.onShown(banner)
                                 }
                                 else {
                                     close()
@@ -206,7 +206,7 @@ open class InAppBannerDialog(private val fragmentActivity: FragmentActivity,
 
                     }).submit()
                 }
-                catch (ignore: Exception) {
+                catch (_: Exception) {
 
                 }
             }
@@ -223,8 +223,9 @@ open class InAppBannerDialog(private val fragmentActivity: FragmentActivity,
     }
 
     protected open fun click(banner: InAppBannerData?) {
+        delegate?.onClick(banner)
         if (banner?.deepLinkValue?.isNotEmpty() == true) {
-            val uri = Uri.parse(banner.deepLinkValue)
+            val uri = banner.deepLinkValue.toUri()
             val url = if (uri.scheme?.isNotEmpty() == true) {
                 banner.deepLinkValue
             }
@@ -233,11 +234,11 @@ open class InAppBannerDialog(private val fragmentActivity: FragmentActivity,
             }
             try {
                 val intent = Intent(Intent.ACTION_VIEW)
-                intent.data = Uri.parse(url)
+                intent.data = url.toUri()
                 fragmentActivity.startActivity(intent)
                 popup?.cancel()
             }
-            catch (e: Exception) {
+            catch (_: Exception) {
                 Toast.makeText(fragmentActivity, "Unknown Intent $url", Toast.LENGTH_LONG).show()
             }
         }
