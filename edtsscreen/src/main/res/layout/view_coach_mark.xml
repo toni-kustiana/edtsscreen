@@ -129,15 +129,37 @@
                     android:text="@string/coach_mark_prev"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content" />
-                <androidx.appcompat.widget.AppCompatTextView
+                <id.co.edtslib.edtsds.ButtonView
+                    android:id="@+id/bvSkip"
+                    app:variant="outline"
+                    app:size="small"
+                    app:layout_constraintTop_toTopOf="@id/bvPositive"
+                    app:layout_constraintEnd_toStartOf="@id/bvNegative"
+                    android:layout_marginEnd="@dimen/dimen_8dp"
+                    android:text="@string/coach_mark_skip"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+                <FrameLayout
                     app:layout_constraintTop_toTopOf="@id/bvPositive"
                     app:layout_constraintBottom_toBottomOf="@id/bvPositive"
                     app:layout_constraintStart_toStartOf="parent"
-                    android:textColor="@color/colorNeutral70"
-                    style="@style/H4"
-                    android:id="@+id/tvCount"
                     android:layout_width="wrap_content"
-                    android:layout_height="match_parent" />
+                    android:layout_height="wrap_content">
+                    <androidx.appcompat.widget.AppCompatTextView
+                        android:textColor="@color/colorNeutral70"
+                        style="@style/H4"
+                        android:id="@+id/tvCount"
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent" />
+                    <id.co.edtslib.edtsds.pagingnavigation.PagingNavigationView
+                        app:shapeSelectedWidth="@dimen/dimen_20dp"
+                        app:shapeSize="@dimen/dimen_8dp"
+                        app:shape="@drawable/bg_coach_onboarding_page_navigation"
+                        android:id="@+id/pagingNavigationView"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content" />
+
+                </FrameLayout>
                 <FrameLayout
                     android:visibility="gone"
                     android:id="@+id/ivCancel"

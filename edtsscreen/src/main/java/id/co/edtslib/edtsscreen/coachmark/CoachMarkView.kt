@@ -23,6 +23,19 @@ open class CoachMarkView: FrameLayout {
     )
 
     var delegate: CoachMarkDelegate? = null
+    var navigationType = CoachNavigationType.Text
+        set(value) {
+            field = value
+            binding.pagingNavigationView.isVisible = value == CoachNavigationType.Bullet
+            binding.tvCount.isVisible = value == CoachNavigationType.Text
+        }
+    var canSkip = false
+        set(value) {
+            field = value
+
+            binding.bvSkip.isVisible = value
+        }
+    var canBack = true
 
     protected lateinit var activity: FragmentActivity
     protected var selectedIndex = 0
@@ -64,6 +77,13 @@ open class CoachMarkView: FrameLayout {
         binding.bvNegative.setOnClickListener {
             selectedIndex -= 1
         }
+
+        binding.bvSkip.setOnClickListener {
+            binding.ivCancel.performClick()
+        }
+
+        navigationType = CoachNavigationType.Text
+        canSkip = false
     }
 
     fun add(coachData: CoachData) {
@@ -91,7 +111,7 @@ open class CoachMarkView: FrameLayout {
         binding.ivTriangle.isVisible = coachData.alignInfo == CoachAlign.Bottom
         binding.ivTriangle180.isVisible = coachData.alignInfo == CoachAlign.Top
 
-        binding.bvNegative.isVisible = coachData.sort > 0
+        binding.bvNegative.isVisible = coachData.sort > 0 && canBack
         binding.bvPositive.text = coachData.positiveText
 
         val rectangle = Rect()
@@ -151,6 +171,11 @@ open class CoachMarkView: FrameLayout {
             R.string.coach_mark_n_from,
             coachData.sort + 1, list.size
         )
+
+        if (binding.pagingNavigationView.count != list.size) {
+            binding.pagingNavigationView.count = list.size
+        }
+        binding.pagingNavigationView.selectedIndex = coachData.sort
 
         binding.vShape.shape = coachData.shape
     }
