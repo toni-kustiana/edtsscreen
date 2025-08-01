@@ -86,6 +86,11 @@ open class CoachMarkView: FrameLayout {
         canSkip = false
     }
 
+    fun showing() {
+        isVisible = true
+        binding.llContent.isVisible = false
+    }
+
     fun add(coachData: CoachData) {
         val index = list.indexOfFirst { it.sort == coachData.sort }
         if (index >= 0) {
@@ -99,7 +104,11 @@ open class CoachMarkView: FrameLayout {
     fun show(activity: FragmentActivity) {
         this.activity = activity
         if (list.isNotEmpty()) {
+            binding.llContent.isVisible = true
             selectedIndex = 0
+        }
+        else {
+            isVisible = false
         }
     }
 
