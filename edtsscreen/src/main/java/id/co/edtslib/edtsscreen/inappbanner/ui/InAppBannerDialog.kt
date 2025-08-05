@@ -245,10 +245,10 @@ open class InAppBannerDialog(private val fragmentActivity: FragmentActivity,
     }
 
     companion object {
-        private var dialog: InAppBannerDialog? = null
+        var dialog: InAppBannerDialog? = null
         fun show(fragmentActivity: FragmentActivity,
                  flowData: Flow<Result<InAppBannerData?>>,
-                 dismissible: Boolean = false) {
+                 dismissible: Boolean = false): InAppBannerDialog? {
             if (dialog == null) {
                 dialog = InAppBannerDialog(
                     fragmentActivity = fragmentActivity,
@@ -257,9 +257,11 @@ open class InAppBannerDialog(private val fragmentActivity: FragmentActivity,
                 )
                 dialog?.show()
             }
+
+            return dialog
         }
 
-        fun show(fragmentActivity: FragmentActivity, url: String?) {
+        fun show(fragmentActivity: FragmentActivity, url: String?): InAppBannerDialog? {
             if (dialog == null) {
                 dialog = InAppBannerDialog(
                     fragmentActivity = fragmentActivity,
@@ -267,6 +269,8 @@ open class InAppBannerDialog(private val fragmentActivity: FragmentActivity,
                 )
                 dialog?.showBanner(InAppBannerData.create(url))
             }
+
+            return dialog
         }
     }
 
