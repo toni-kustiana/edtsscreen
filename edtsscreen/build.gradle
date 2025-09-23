@@ -60,7 +60,7 @@ dependencies {
     implementation 'androidx.appcompat:appcompat:1.5.1'
     implementation 'com.google.android.material:material:1.6.1'
     implementation("com.github.edstlib:edtsku:1.7.7")
-    implementation("com.github.edtslib:edtsds:1.1.8")
+    implementation("com.github.edtslib:edtsds:1.3.29")
 
     implementation 'com.google.zxing:core:3.5.0'
     // DON'T CHANGE TO NEW VERSION. THERE IS BUG list.sort >= 24
