@@ -63,8 +63,13 @@ open class NfcFragment : BaseFragment<EdtsScreenFragmentNfcBinding>() {
         }
     }
 
-    fun process(intent: Intent, command: ByteArray) {
-        nfcManager.processIntent(intent, command)
+    fun process(
+        intent: Intent,
+        command: ByteArray,
+        nfcMode: NfcMode = NfcMode.READ,
+        valueToWrite: String? = null
+    ) {
+        nfcManager.processIntent(intent, command, nfcMode, valueToWrite)
     }
 
     override fun onResume() {

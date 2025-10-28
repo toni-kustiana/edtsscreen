@@ -7,6 +7,8 @@ import android.nfc.NdefRecord
 import android.nfc.NfcAdapter
 import android.nfc.Tag
 import android.nfc.tech.IsoDep
+import android.nfc.tech.Ndef
+import android.nfc.tech.NdefFormatable
 import android.os.Build
 import android.os.Parcelable
 import android.provider.Settings
@@ -90,10 +92,10 @@ class NfcManager(private val activity: FragmentActivity, intent: Intent) {
     fun processIntent(
         intent: Intent,
         command: ByteArray,
-        isRead: Boolean = true,
+        nfcMode: NfcMode = NfcMode.READ,
         valueToWrite: String? = null
     ) {
-        if (isRead){
+        if (nfcMode.isRead()){
             activity.intent = intent
             resolveIntent(intent, command)
         } else {
@@ -276,81 +278,51 @@ class NfcManager(private val activity: FragmentActivity, intent: Intent) {
         } else {
             @Suppress("DEPRECATION")
             intent.getParcelableExtra(NfcAdapter.EXTRA_TAG)
-        }
-        if (tag == null) {
-            Log.e("NfcManager", "No NFC tag found in intent")
+        } ?: run {
             delegate?.onCommandError(null, "No NFC tag found")
             return
         }
 
+        if (text.isNullOrEmpty()){
+            delegate?.onCommandError(null, "Value is empty")
+            return
+        }
+
         try {
-            val ndef = android.nfc.tech.Ndef.get(tag)
+            val ndef = Ndef.get(tag)
+            val message = NdefMessage(
+                arrayOf(NdefRecord.createTextRecord("en", text))
+            )
+
+            // Check if the tag already NDEF formatted
             if (ndef != null) {
                 ndef.connect()
+
                 if (!ndef.isWritable) {
                     delegate?.onCommandError(null, "Tag is read-only")
-                    ndef.close()
-                    return
-                }
-                if (text.isNullOrEmpty()){
-                    delegate?.onCommandError(null, "Value is not valid")
-                    ndef.close()
                     return
                 }
 
-                // Create a simple text record in NDEF format
-                val languageCode = "en"
-                val textBytes = text.toByteArray(Charsets.UTF_8)
-                val langBytes = languageCode.toByteArray(Charsets.US_ASCII)
-                val payload = ByteArray(1 + langBytes.size + textBytes.size)
-                payload[0] = langBytes.size.toByte()
-                System.arraycopy(langBytes, 0, payload, 1, langBytes.size)
-                System.arraycopy(textBytes, 0, payload, 1 + langBytes.size, textBytes.size)
-
-                val record = NdefRecord(
-                    NdefRecord.TNF_WELL_KNOWN,
-                    NdefRecord.RTD_TEXT,
-                    ByteArray(0),
-                    payload
-                )
-                val message = NdefMessage(arrayOf(record))
-
-                // Check tag capacity
                 if (ndef.maxSize < message.toByteArray().size) {
                     delegate?.onCommandError(null, "Tag capacity too small")
-                    ndef.close()
                     return
                 }
 
-                // Write message
                 ndef.writeNdefMessage(message)
-                ndef.close()
-
-                Log.d("NfcManager", "Write successful: $text")
-                delegate?.onRead(arrayOf(message)) // optionally notify success
+                delegate?.onRead(arrayOf(message))
             } else {
-                // Handle non-NDEF formatted tag
-                val formattable = android.nfc.tech.NdefFormatable.get(tag)
-                if (formattable != null) {
-                    formattable.connect()
-                    val message = NdefMessage(
-                        arrayOf(
-                            NdefRecord.createTextRecord("en", text)
-                        )
-                    )
-                    formattable.format(message)
-                    formattable.close()
-                    Log.d("NfcManager", "Tag formatted and written successfully")
+                // If not NDEF formatted yet, try to format it
+                val formatable = NdefFormatable.get(tag)
+                if (formatable != null) {
+                    formatable.connect()
+                    formatable.format(message)
                     delegate?.onRead(arrayOf(message))
                 } else {
                     delegate?.onCommandError(null, "Tag is not NDEF compatible")
                 }
             }
         } catch (e: Exception) {
-            e.printStackTrace()
             delegate?.onCommandError(e, e.message)
         }
     }
-
-
 }

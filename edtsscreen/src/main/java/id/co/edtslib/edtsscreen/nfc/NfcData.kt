@@ -1,6 +1,7 @@
 package id.co.edtslib.edtsscreen.nfc
 
 import com.google.gson.Gson
+import com.google.gson.JsonSyntaxException
 import com.google.gson.reflect.TypeToken
 
 data class NfcData (
@@ -12,6 +13,10 @@ data class NfcData (
 ) {
     companion object {
         fun fromJson(json: String) =
-            Gson().fromJson<NfcData?>(json, object : TypeToken<NfcData?>() {}.type)
+            try {
+                Gson().fromJson<NfcData?>(json, object : TypeToken<NfcData?>() {}.type)
+            } catch (e: JsonSyntaxException){
+                null
+            }
      }
 }
