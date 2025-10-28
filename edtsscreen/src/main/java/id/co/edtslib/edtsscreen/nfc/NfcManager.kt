@@ -15,9 +15,12 @@ import android.provider.Settings
 import android.util.Log
 import android.view.View
 import androidx.fragment.app.FragmentActivity
+import androidx.lifecycle.lifecycleScope
 import com.google.gson.Gson
 import id.co.edtslib.edtsds.popup.Popup
 import id.co.edtslib.edtsds.popup.PopupDelegate
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 class NfcManager(private val activity: FragmentActivity, intent: Intent) {
     interface NfcManagerDelegate {
@@ -284,50 +287,75 @@ class NfcManager(private val activity: FragmentActivity, intent: Intent) {
             return
         }
 
-        if (text.isNullOrEmpty()){
+        if (text.isNullOrEmpty()) {
             delegate?.onCommandError(null, "Value is empty")
             return
         }
 
         delegate?.onLoading(true)
 
-        try {
-            val ndef = Ndef.get(tag)
-            val message = NdefMessage(
-                arrayOf(NdefRecord.createTextRecord("en", text))
-            )
+        var ndef: Ndef? = null
+        var formatable: NdefFormatable? = null
 
-            // Check if the tag already NDEF formatted
-            if (ndef != null) {
-                ndef.connect()
+        activity.lifecycleScope.launch {
+            try {
+                val message = NdefMessage(
+                    arrayOf(NdefRecord.createTextRecord("en", text))
+                )
+                val messageSize = message.toByteArray().size
+                val delayBySize = calculateDelay(messageSize)
 
-                if (!ndef.isWritable) {
-                    delegate?.onCommandError(null, "Tag is read-only")
-                    return
-                }
+                ndef = Ndef.get(tag)
 
-                if (ndef.maxSize < message.toByteArray().size) {
-                    delegate?.onCommandError(null, "Tag capacity too small")
-                    return
-                }
+                // Check if the tag already NDEF formatted
+                if (ndef != null) {
+                    ndef.connect()
 
-                ndef.writeNdefMessage(message)
-                delegate?.onRead(arrayOf(message))
-            } else {
-                // If not NDEF formatted yet, try to format it
-                val formatable = NdefFormatable.get(tag)
-                if (formatable != null) {
-                    formatable.connect()
-                    formatable.format(message)
+                    if (!ndef.isWritable) {
+                        delegate?.onCommandError(null, "Tag is read-only")
+                        return@launch
+                    }
+
+                    if (ndef.maxSize < messageSize) {
+                        delegate?.onCommandError(null, "Tag capacity too small")
+                        return@launch
+                    }
+
+                    delay(delayBySize)
+
+                    ndef.writeNdefMessage(message)
                     delegate?.onRead(arrayOf(message))
                 } else {
-                    delegate?.onCommandError(null, "Tag is not NDEF compatible")
+                    // If not NDEF formatted yet, try to format it
+                    formatable = NdefFormatable.get(tag)
+                    if (formatable != null) {
+                        formatable.connect()
+                        delay(delayBySize)
+                        formatable.format(message)
+                        delegate?.onRead(arrayOf(message))
+                    } else {
+                        delegate?.onCommandError(null, "Tag is not NDEF compatible")
+                    }
                 }
+            } catch (e: Exception) {
+                delegate?.onCommandError(e, e.message)
+            } finally {
+                try {
+                    ndef?.close()
+                    formatable?.close()
+                } catch (e: Exception) {
+                    // Ignore close errors
+                }
+                delegate?.onLoading(false)
             }
-        } catch (e: Exception) {
-            delegate?.onCommandError(e, e.message)
-        } finally {
-            delegate?.onLoading(false)
         }
+
+    }
+
+    private fun calculateDelay(messageSize: Int) = when {
+        messageSize < 50 -> 50L     // Small: minimal delay
+        messageSize < 100 -> 100L   // Medium: 100ms
+        messageSize < 200 -> 150L   // Large: 150ms
+        else -> 200L                // Very large: 200ms
     }
 }
