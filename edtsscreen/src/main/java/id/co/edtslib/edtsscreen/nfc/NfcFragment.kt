@@ -60,6 +60,10 @@ open class NfcFragment : BaseFragment<EdtsScreenFragmentNfcBinding>() {
             override fun onCommandError(err: Exception?, message: String?) {
                 delegate?.onCommandError(err, message)
             }
+
+            override fun onLoading(isLoading: Boolean) {
+                delegate?.onLoading(isLoading)
+            }
         }
     }
 

@@ -81,6 +81,18 @@ class NfcActivity : AppCompatActivity() {
                 binding.tvNfcError.text = String.format("error=%s", err?.toString() ?: message)
             }
 
+            override fun onLoading(isLoading: Boolean) {
+                // the process is too fast, we can use dummy progress if needed
+                binding.progressBar.apply {
+                    if (isLoading){
+                        isVisible = true
+                        postDelayed({
+                            isVisible = false
+                        }, 500)
+                    }
+                }
+            }
+
         }
         setupListener()
     }

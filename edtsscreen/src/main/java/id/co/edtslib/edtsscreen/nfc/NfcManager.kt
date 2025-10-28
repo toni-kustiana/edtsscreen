@@ -31,6 +31,7 @@ class NfcManager(private val activity: FragmentActivity, intent: Intent) {
         fun openSetting(popup: Popup)
         fun onClosePopup()
         fun onCommandError(err: Exception?, message: String?)
+        fun onLoading(isLoading: Boolean){}
     }
 
     private var nfcAdapter: NfcAdapter? = NfcAdapter.getDefaultAdapter(activity)
@@ -288,6 +289,8 @@ class NfcManager(private val activity: FragmentActivity, intent: Intent) {
             return
         }
 
+        delegate?.onLoading(true)
+
         try {
             val ndef = Ndef.get(tag)
             val message = NdefMessage(
@@ -323,6 +326,8 @@ class NfcManager(private val activity: FragmentActivity, intent: Intent) {
             }
         } catch (e: Exception) {
             delegate?.onCommandError(e, e.message)
+        } finally {
+            delegate?.onLoading(false)
         }
     }
 }

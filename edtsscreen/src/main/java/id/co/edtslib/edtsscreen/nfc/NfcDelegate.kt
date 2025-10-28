@@ -12,4 +12,5 @@ interface NfcDelegate {
     fun onNfcReceived(txBytes: ByteArray, rxBytes: ByteArray)
     fun onClosePopup()
     fun onCommandError(err: Exception?, message: String?)
+    fun onLoading(isLoading: Boolean){}
 }
