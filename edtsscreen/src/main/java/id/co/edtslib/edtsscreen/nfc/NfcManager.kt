@@ -7,6 +7,7 @@ import android.nfc.NdefRecord
 import android.nfc.NfcAdapter
 import android.nfc.Tag
 import android.nfc.tech.IsoDep
+import android.os.Build
 import android.os.Parcelable
 import android.provider.Settings
 import android.util.Log
@@ -86,9 +87,18 @@ class NfcManager(private val activity: FragmentActivity, intent: Intent) {
         )
     }
 
-    fun processIntent(intent: Intent, command: ByteArray) {
-        activity.intent = intent
-        resolveIntent(intent, command)
+    fun processIntent(
+        intent: Intent,
+        command: ByteArray,
+        isRead: Boolean = true,
+        valueToWrite: String? = null
+    ) {
+        if (isRead){
+            activity.intent = intent
+            resolveIntent(intent, command)
+        } else {
+            writeToTag(intent, valueToWrite)
+        }
     }
 
     @Suppress("DEPRECATION")
@@ -259,5 +269,88 @@ class NfcManager(private val activity: FragmentActivity, intent: Intent) {
         }
         return sb.toString()*/
     }
+
+    fun writeToTag(intent: Intent, text: String?) {
+        val tag = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            intent.getParcelableExtra(NfcAdapter.EXTRA_TAG, Tag::class.java)
+        } else {
+            @Suppress("DEPRECATION")
+            intent.getParcelableExtra(NfcAdapter.EXTRA_TAG)
+        }
+        if (tag == null) {
+            Log.e("NfcManager", "No NFC tag found in intent")
+            delegate?.onCommandError(null, "No NFC tag found")
+            return
+        }
+
+        try {
+            val ndef = android.nfc.tech.Ndef.get(tag)
+            if (ndef != null) {
+                ndef.connect()
+                if (!ndef.isWritable) {
+                    delegate?.onCommandError(null, "Tag is read-only")
+                    ndef.close()
+                    return
+                }
+                if (text.isNullOrEmpty()){
+                    delegate?.onCommandError(null, "Value is not valid")
+                    ndef.close()
+                    return
+                }
+
+                // Create a simple text record in NDEF format
+                val languageCode = "en"
+                val textBytes = text.toByteArray(Charsets.UTF_8)
+                val langBytes = languageCode.toByteArray(Charsets.US_ASCII)
+                val payload = ByteArray(1 + langBytes.size + textBytes.size)
+                payload[0] = langBytes.size.toByte()
+                System.arraycopy(langBytes, 0, payload, 1, langBytes.size)
+                System.arraycopy(textBytes, 0, payload, 1 + langBytes.size, textBytes.size)
+
+                val record = NdefRecord(
+                    NdefRecord.TNF_WELL_KNOWN,
+                    NdefRecord.RTD_TEXT,
+                    ByteArray(0),
+                    payload
+                )
+                val message = NdefMessage(arrayOf(record))
+
+                // Check tag capacity
+                if (ndef.maxSize < message.toByteArray().size) {
+                    delegate?.onCommandError(null, "Tag capacity too small")
+                    ndef.close()
+                    return
+                }
+
+                // Write message
+                ndef.writeNdefMessage(message)
+                ndef.close()
+
+                Log.d("NfcManager", "Write successful: $text")
+                delegate?.onRead(arrayOf(message)) // optionally notify success
+            } else {
+                // Handle non-NDEF formatted tag
+                val formattable = android.nfc.tech.NdefFormatable.get(tag)
+                if (formattable != null) {
+                    formattable.connect()
+                    val message = NdefMessage(
+                        arrayOf(
+                            NdefRecord.createTextRecord("en", text)
+                        )
+                    )
+                    formattable.format(message)
+                    formattable.close()
+                    Log.d("NfcManager", "Tag formatted and written successfully")
+                    delegate?.onRead(arrayOf(message))
+                } else {
+                    delegate?.onCommandError(null, "Tag is not NDEF compatible")
+                }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            delegate?.onCommandError(e, e.message)
+        }
+    }
+
 
 }
