@@ -294,20 +294,19 @@ class NfcManager(private val activity: FragmentActivity, intent: Intent) {
 
         delegate?.onLoading(true)
 
-        var ndef: Ndef? = null
-        var formatable: NdefFormatable? = null
-
         activity.lifecycleScope.launch {
             try {
-                val message = NdefMessage(
-                    arrayOf(NdefRecord.createTextRecord("en", text))
-                )
+                val message = NdefMessage(arrayOf(NdefRecord.createTextRecord("en", text)))
                 val messageSize = message.toByteArray().size
+                /** Add a small delay before writing.
+                * Some NFC chips (especially Mifare Classic / older tags) need a short stabilization window
+                * after connecting before performing write operations.
+                * The delay duration is scaled dynamically based on payload size.*/
                 val delayBySize = calculateDelay(messageSize)
 
-                ndef = Ndef.get(tag)
+                val ndef = Ndef.get(tag)
+                val formatable = NdefFormatable.get(tag)
 
-                // Check if the tag already NDEF formatted
                 if (ndef != null) {
                     ndef.connect()
 
@@ -321,37 +320,34 @@ class NfcManager(private val activity: FragmentActivity, intent: Intent) {
                         return@launch
                     }
 
-                    delay(delayBySize)
-
+                    delay(delayBySize) // Wait briefly to ensure the tag is ready for write
                     ndef.writeNdefMessage(message)
                     delegate?.onRead(arrayOf(message))
+                } else if (formatable != null) {
+                    formatable.connect()
+                    delay(delayBySize) // Wait briefly before formatting, prevents tag reset errors
+                    formatable.format(message)
+                    delegate?.onRead(arrayOf(message))
                 } else {
-                    // If not NDEF formatted yet, try to format it
-                    formatable = NdefFormatable.get(tag)
-                    if (formatable != null) {
-                        formatable.connect()
-                        delay(delayBySize)
-                        formatable.format(message)
-                        delegate?.onRead(arrayOf(message))
-                    } else {
-                        delegate?.onCommandError(null, "Tag is not NDEF compatible")
-                    }
+                    delegate?.onCommandError(null, "Tag is not NDEF compatible")
                 }
             } catch (e: Exception) {
                 delegate?.onCommandError(e, e.message)
             } finally {
                 try {
-                    ndef?.close()
-                    formatable?.close()
-                } catch (e: Exception) {
-                    // Ignore close errors
-                }
+                    Ndef.get(tag)?.close()
+                    NdefFormatable.get(tag)?.close()
+                } catch (_: Exception) {}
                 delegate?.onLoading(false)
             }
         }
-
     }
 
+    /**
+     * Calculates a safe artificial delay (in milliseconds) before writing to the NFC tag.
+     * The delay helps ensure that the tag’s internal write buffer is ready, especially for
+     * tags with slower response times or larger NDEF payloads.
+     */
     private fun calculateDelay(messageSize: Int) = when {
         messageSize < 50 -> 50L     // Small: minimal delay
         messageSize < 100 -> 100L   // Medium: 100ms
