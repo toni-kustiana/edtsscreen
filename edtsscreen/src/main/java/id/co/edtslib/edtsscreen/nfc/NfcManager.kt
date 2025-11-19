@@ -21,6 +21,7 @@ import id.co.edtslib.edtsds.popup.Popup
 import id.co.edtslib.edtsds.popup.PopupDelegate
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import java.io.IOException
 
 class NfcManager(private val activity: FragmentActivity, intent: Intent) {
     interface NfcManagerDelegate {
@@ -331,6 +332,8 @@ class NfcManager(private val activity: FragmentActivity, intent: Intent) {
                 } else {
                     delegate?.onCommandError(null, "Tag is not NDEF compatible")
                 }
+            } catch (e: IOException){
+                delegate?.onCommandError(e, "Failed to write NFC card, please try again")
             } catch (e: Exception) {
                 delegate?.onCommandError(e, e.message)
             } finally {
