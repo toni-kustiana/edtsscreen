@@ -281,6 +281,17 @@ class NfcManager(private val activity: FragmentActivity, intent: Intent) {
         return sb.toString()*/
     }
 
+    // case write on iso dep card (ex: brizzi)
+    private fun silentCloseIsoDep() {
+        try {
+            closeConnection()
+        } catch (_: Exception) {
+            // If it fails (e.g., tag already removed), we don't care.
+            // Just ignore the crash.
+        }
+        isoDep = null
+    }
+
     fun writeToTag(intent: Intent, text: String?) {
         val tag = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             intent.getParcelableExtra(NfcAdapter.EXTRA_TAG, Tag::class.java)
@@ -298,7 +309,7 @@ class NfcManager(private val activity: FragmentActivity, intent: Intent) {
         }
 
         // 1. Force close any existing IsoDep connection before starting NDEF write
-        closeConnection()
+        silentCloseIsoDep()
 
         delegate?.onLoading(true)
 
