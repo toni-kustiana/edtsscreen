@@ -1,6 +1,7 @@
 package id.co.edtslib.edtsscreen.nfc
 
 import android.app.PendingIntent
+import android.content.Context
 import android.content.Intent
 import android.nfc.NdefMessage
 import android.nfc.NdefRecord
@@ -11,6 +12,9 @@ import android.nfc.tech.Ndef
 import android.nfc.tech.NdefFormatable
 import android.os.Build
 import android.os.Parcelable
+import android.os.VibrationEffect
+import android.os.Vibrator
+import android.os.VibratorManager
 import android.provider.Settings
 import android.util.Log
 import android.view.View
@@ -293,56 +297,84 @@ class NfcManager(private val activity: FragmentActivity, intent: Intent) {
             return
         }
 
+        // 1. Force close any existing IsoDep connection before starting NDEF write
+        closeConnection()
+
         delegate?.onLoading(true)
 
         activity.lifecycleScope.launch {
-            try {
-                val message = NdefMessage(arrayOf(NdefRecord.createTextRecord("en", text)))
-                val messageSize = message.toByteArray().size
-                /** Add a small delay before writing.
-                * Some NFC chips (especially Mifare Classic / older tags) need a short stabilization window
-                * after connecting before performing write operations.
-                * The delay duration is scaled dynamically based on payload size.*/
-                val delayBySize = calculateDelay(messageSize)
+            val message = NdefMessage(arrayOf(NdefRecord.createTextRecord("en", text)))
+            val messageSize = message.toByteArray().size
+            val delayBySize = calculateDelay(messageSize)
 
-                val ndef = Ndef.get(tag)
-                val formatable = NdefFormatable.get(tag)
+            var success = false
+            var lastError: Exception? = null
 
-                if (ndef != null) {
-                    ndef.connect()
+            // 2. RETRY LOOP: Try up to 3 times
+            val maxAttempts = 3
+            for (attempt in 1..maxAttempts) {
+                if (success) break
 
-                    if (!ndef.isWritable) {
-                        delegate?.onCommandError(null, "Tag is read-only")
-                        return@launch
-                    }
-
-                    if (ndef.maxSize < messageSize) {
-                        delegate?.onCommandError(null, "Tag capacity too small")
-                        return@launch
-                    }
-
-                    delay(delayBySize) // Wait briefly to ensure the tag is ready for write
-                    ndef.writeNdefMessage(message)
-                    delegate?.onRead(arrayOf(message))
-                } else if (formatable != null) {
-                    formatable.connect()
-                    delay(delayBySize) // Wait briefly before formatting, prevents tag reset errors
-                    formatable.format(message)
-                    delegate?.onRead(arrayOf(message))
-                } else {
-                    delegate?.onCommandError(null, "Tag is not NDEF compatible")
-                }
-            } catch (e: IOException){
-                delegate?.onCommandError(e, "Failed to write NFC card, please try again")
-            } catch (e: Exception) {
-                delegate?.onCommandError(e, e.message)
-            } finally {
                 try {
-                    Ndef.get(tag)?.close()
-                    NdefFormatable.get(tag)?.close()
-                } catch (_: Exception) {}
-                delegate?.onLoading(false)
+                    val ndef = Ndef.get(tag)
+                    val formatable = NdefFormatable.get(tag)
+
+                    if (ndef != null) {
+                        // Try to connect
+                        if (!ndef.isConnected) ndef.connect()
+
+                        if (!ndef.isWritable) {
+                            throw IOException("Tag is read-only")
+                        }
+                        if (ndef.maxSize < messageSize) {
+                            throw IOException("Tag capacity too small")
+                        }
+
+                        // Apply delay for stability
+                        delay(delayBySize)
+                        ndef.writeNdefMessage(message)
+
+                        // If we got here, it worked
+                        success = true
+                        delegate?.onRead(arrayOf(message))
+                        ndef.close() // Clean close
+
+                    } else if (formatable != null) {
+                        formatable.connect()
+                        delay(delayBySize)
+                        formatable.format(message)
+                        success = true
+                        delegate?.onRead(arrayOf(message))
+                        formatable.close()
+                    } else {
+                        throw IOException("Tag is not NDEF compatible")
+                    }
+
+                } catch (e: IOException) {
+                    lastError = e
+                    Log.w("NfcManager", "Write attempt $attempt failed: ${e.message}")
+
+                    // 3. CRITICAL: Close connection before retrying to reset the stack
+                    try {
+                        Ndef.get(tag)?.close()
+                        NdefFormatable.get(tag)?.close()
+                    } catch (_: Exception) { }
+
+                    // Wait a bit before retrying (RF field stabilization)
+                    if (attempt < maxAttempts) delay(500)
+                } catch (e: Exception) {
+                    // Non-recoverable errors (logic bugs, etc)
+                    lastError = e
+                    break
+                }
             }
+
+            // 4. Handle final result
+            if (!success) {
+                delegate?.onCommandError(lastError, "Failed to write after $maxAttempts attempts: ${lastError?.message}")
+            }
+
+            delegate?.onLoading(false)
         }
     }
 
