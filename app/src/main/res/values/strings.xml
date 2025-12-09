@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">Edts Screen</string>
+    <string name="txbytes_rxbytes_balance">txBytes=%1$s\nrxBytes=%2$s\nbalance=%3$d</string>
+    <string name="mode">Mode : %1$s</string>
 </resources>

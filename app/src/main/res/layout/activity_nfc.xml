@@ -9,66 +9,67 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:gravity="center"
         android:orientation="vertical"
-        android:padding="@dimen/dimen_16dp"
-        android:gravity="center">
+        android:padding="@dimen/dimen_16dp">
+
         <TextView
             android:id="@+id/tvMode"
+            style="@style/D2"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center"
-            style="@style/D2"
-            android:text="Mode"/>
+            android:text="@string/mode" />
 
         <androidx.appcompat.widget.AppCompatTextView
             android:id="@+id/tvNfcData"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:gravity="center"
-            android:text="NFC Data"
             android:layout_marginTop="@dimen/dimen_12dp"
+            android:gravity="center"
+            android:text="@string/nfc_data"
             android:textColor="@color/colorNeutral70" />
 
         <androidx.appcompat.widget.AppCompatTextView
             android:id="@+id/tvNfcBytes"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:gravity="center"
-            android:text="NFC Bytes"
             android:layout_marginTop="@dimen/dimen_12dp"
+            android:gravity="center"
+            android:text="@string/nfc_bytes"
             android:textColor="@color/colorNeutral70" />
 
         <androidx.appcompat.widget.AppCompatTextView
             android:id="@+id/tvNfcError"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:gravity="center"
-            android:text="NFC Error"
             android:layout_marginTop="@dimen/dimen_12dp"
+            android:gravity="center"
+            android:text="@string/nfc_error"
             android:textColor="@color/colorNeutral70" />
 
         <EditText
             android:id="@+id/etValue"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:autofillHints="Value to write"
-            android:hint="Value to write"
-            android:inputType="text"
             android:layout_marginTop="@dimen/dimen_12dp"
-            app:layout_constraintBottom_toTopOf="@id/llAction"/>
+            android:autofillHints="Value to write"
+            android:hint="@string/value_to_write"
+            android:inputType="text"
+            app:layout_constraintBottom_toTopOf="@id/llAction" />
 
         <LinearLayout
             android:id="@+id/llAction"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/dimen_12dp"
-            app:layout_constraintBottom_toBottomOf="parent"
-            android:orientation="horizontal">
+            android:orientation="horizontal"
+            app:layout_constraintBottom_toBottomOf="parent">
 
             <FrameLayout
                 android:layout_width="0dp"
-                android:layout_weight="1"
                 android:layout_height="wrap_content"
+                android:layout_weight="1"
                 android:background="@color/white">
 
                 <Button
@@ -79,12 +80,14 @@
                     android:text="Write"
                     tools:ignore="HardcodedText" />
             </FrameLayout>
+
             <View
                 android:layout_width="12dp"
-                android:layout_height="0dp"/>
+                android:layout_height="0dp" />
+
             <FrameLayout
-                android:layout_height="wrap_content"
                 android:layout_width="0dp"
+                android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:background="@color/white">
 
@@ -104,10 +107,10 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:visibility="gone"
-        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"/>
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
     <androidx.fragment.app.FragmentContainerView
         android:id="@+id/fragment_container_view"
@@ -115,6 +118,6 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:fitsSystemWindows="true"
-        android:visibility="gone"/>
+        android:visibility="gone" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

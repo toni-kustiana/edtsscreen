@@ -2,9 +2,9 @@ package id.co.edtsscreen
 
 import android.content.Intent
 import android.os.Bundle
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.isVisible
+import com.google.android.material.snackbar.Snackbar
 import id.co.edtslib.edtsscreen.nfc.NfcData
 import id.co.edtslib.edtsscreen.nfc.NfcDelegate
 import id.co.edtslib.edtsscreen.nfc.NfcFragment
@@ -15,12 +15,18 @@ import id.co.edtslib.edtsscreen.nfc.record.ParsedNdefRecord
 import id.co.edtsscreen.databinding.ActivityNfcBinding
 
 class NfcActivity : AppCompatActivity() {
+
     private lateinit var binding: ActivityNfcBinding
-    private lateinit var nfcManager: NfcManager
+    private val nfcFragment: NfcFragment?
+        get() = supportFragmentManager.findFragmentById(R.id.fragment_container_view) as? NfcFragment
+    private val nfcManager: NfcManager?
+        get() = nfcFragment?.nfcManager
+
     private var nfcMode: NfcMode = NfcMode.READ
 
-    companion object{
-        fun open(activity: AppCompatActivity){
+    companion object {
+        private const val READ_BALANCE_COMMAND = "00B500000A"
+        fun open(activity: AppCompatActivity) {
             activity.startActivity(
                 Intent(
                     activity,
@@ -35,68 +41,73 @@ class NfcActivity : AppCompatActivity() {
         binding = ActivityNfcBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        setupNfcFragment()
         updateMode(nfcMode)
-        val fragment =
-            supportFragmentManager.findFragmentById(R.id.fragment_container_view) as NfcFragment
-        fragment.keepTrayAfterScan = false
-        fragment.delegate = object : NfcDelegate {
-            override fun onNfcReceived(records: List<ParsedNdefRecord>) {
-                if (records.isNotEmpty()) {
-                    val nfcDataList = getParsedNfcData(records)
-                    val nfcNonParsed = records.joinToString(", ") { it.str() }
-                    val finalData = nfcDataList.ifEmpty { nfcNonParsed }
+        setupListener()
+    }
 
-                    if (finalData.isNotEmpty()) {
-                        binding.tvNfcData.text = String.format(
-                            "nfcData=%s\n", finalData
-                        )
-                        Toast.makeText(
-                            this@NfcActivity,
-                            finalData,
-                            Toast.LENGTH_SHORT
-                        ).show()
+    fun setupNfcFragment() {
+        nfcFragment?.let { fragment ->
+            fragment.keepTrayAfterScan = false
+            fragment.delegate = object : NfcDelegate {
+                override fun onNfcReceived(records: List<ParsedNdefRecord>) {
+                    if (records.isNotEmpty()) {
+                        val nfcDataList = getParsedNfcData(records)
+                        val nfcNonParsed = records.joinToString(", ") { it.str() }
+                        val finalData = nfcDataList.ifEmpty { nfcNonParsed }
+
+                        if (finalData.isNotEmpty()) {
+                            binding.tvNfcData.text = String.format(
+                                "nfcData=%s\n", finalData
+                            )
+                            val snackBar =
+                                Snackbar.make(binding.root, finalData, Snackbar.LENGTH_SHORT)
+                            snackBar.show()
+                        }
                     }
                 }
-            }
 
-            override fun onNfcReceived(txBytes: ByteArray, rxBytes: ByteArray) {
-                if (rxBytes.size >= 4) {
-                    val balance = Utils.toInt32(rxBytes, 0)
-                    binding.tvNfcBytes.text = String.format(
-                        "txBytes=%s\nrxBytes=%s\nbalance=$balance",
-                        txBytes.contentToString(),
-                        rxBytes.contentToString(),
-                        balance
-                    )
-                } else {
-                    binding.tvNfcBytes.text = String.format("apdu command bytes length less than 4")
+                override fun onNfcReceived(txBytes: ByteArray, rxBytes: ByteArray) {
+                    if (rxBytes.size >= 4) {
+                        val balance = Utils.toInt32(rxBytes, 0)
+                        binding.tvNfcBytes.text =
+                            getString(
+                                R.string.txbytes_rxbytes_balance,
+                                txBytes.contentToString(),
+                                rxBytes.contentToString(),
+                                balance
+                            )
+
+                    } else {
+                        binding.tvNfcBytes.text =
+                            String.format("apdu command bytes length less than 4")
+                    }
                 }
+
+                override fun onClosePopup() {
+                    // do something
+                }
+
+                override fun onCommandError(err: Exception?, message: String?) {
+                    binding.tvNfcError.text = String.format("error=%s", err?.toString() ?: message)
+                }
+
+                override fun onLoading(isLoading: Boolean) {
+                    // if the process is too fast (small data), we can use dummy progress if needed
+                    //                binding.progressBar.apply {
+                    //                    if (isLoading){
+                    //                        isVisible = true
+                    //                        postDelayed({
+                    //                            isVisible = false
+                    //                        }, 500)
+                    //                    }
+                    //                }
+
+                    binding.progressBar.isVisible = isLoading
+                }
+
             }
-
-            override fun onClosePopup() {
-                // do something
-            }
-
-            override fun onCommandError(err: Exception?, message: String?) {
-                binding.tvNfcError.text = String.format("error=%s", err?.toString() ?: message)
-            }
-
-            override fun onLoading(isLoading: Boolean) {
-                // if the process is too fast (small data), we can use dummy progress if needed
-//                binding.progressBar.apply {
-//                    if (isLoading){
-//                        isVisible = true
-//                        postDelayed({
-//                            isVisible = false
-//                        }, 500)
-//                    }
-//                }
-
-                binding.progressBar.isVisible = isLoading
-            }
-
         }
-        setupListener()
     }
 
     private fun setupListener() {
@@ -110,38 +121,40 @@ class NfcActivity : AppCompatActivity() {
         }
     }
 
-    private fun updateMode(nfcMode: NfcMode){
+    private fun updateMode(nfcMode: NfcMode) {
         this.nfcMode = nfcMode
-        binding.tvMode.text = "Mode : ${nfcMode.name}"
+        binding.tvMode.text = getString(R.string.mode, nfcMode.name)
     }
 
     private fun showTray() {
-        val fragment =
-            supportFragmentManager.findFragmentById(R.id.fragment_container_view) as NfcFragment
         binding.fragmentContainerView.isVisible = true
-        fragment.showTray()
+        nfcFragment?.showTray()
     }
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
-
-        val fragment =
-            supportFragmentManager.findFragmentById(R.id.fragment_container_view) as NfcFragment
-        nfcManager = fragment.nfcManager
-        fragment.process(
+        nfcFragment?.process(
             intent,
-            Utils.hexToByteArray("00B500000A"),
+            Utils.hexToByteArray(READ_BALANCE_COMMAND),
             nfcMode,
             binding.etValue.text.toString()
         )
     }
 
     private fun getParsedNfcData(records: List<ParsedNdefRecord>): String =
-        records.filter { record: ParsedNdefRecord ->
-            val nfcData = NfcData.fromJson(record.str())
-            nfcData?.id != null
-        }.joinToString(", ") { record: ParsedNdefRecord ->
-            val nfcData = NfcData.fromJson(record.str())
-            nfcData?.toString() ?: "nfcData null"
-        }
+        records
+            .mapNotNull { record -> NfcData.fromJson(record.str()) }
+            .filter { nfcData -> nfcData.id != null }
+            .joinToString(", ") { nfcData -> nfcData.toString() }
+
+    override fun onResume() {
+        super.onResume()
+        nfcManager?.enableForegroundDispatch(this)
+    }
+
+    override fun onPause() {
+        super.onPause()
+        nfcManager?.disableForegroundDispatch(this)
+    }
+
 }
