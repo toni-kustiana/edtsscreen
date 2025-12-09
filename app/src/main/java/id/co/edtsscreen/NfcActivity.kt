@@ -8,7 +8,6 @@ import com.google.android.material.snackbar.Snackbar
 import id.co.edtslib.edtsscreen.nfc.NfcData
 import id.co.edtslib.edtsscreen.nfc.NfcDelegate
 import id.co.edtslib.edtsscreen.nfc.NfcFragment
-import id.co.edtslib.edtsscreen.nfc.NfcManager
 import id.co.edtslib.edtsscreen.nfc.NfcMode
 import id.co.edtslib.edtsscreen.nfc.Utils
 import id.co.edtslib.edtsscreen.nfc.record.ParsedNdefRecord
@@ -19,8 +18,6 @@ class NfcActivity : AppCompatActivity() {
     private lateinit var binding: ActivityNfcBinding
     private val nfcFragment: NfcFragment?
         get() = supportFragmentManager.findFragmentById(R.id.fragment_container_view) as? NfcFragment
-    private val nfcManager: NfcManager?
-        get() = nfcFragment?.nfcManager
 
     private var nfcMode: NfcMode = NfcMode.READ
 
@@ -146,15 +143,5 @@ class NfcActivity : AppCompatActivity() {
             .mapNotNull { record -> NfcData.fromJson(record.str()) }
             .filter { nfcData -> nfcData.id != null }
             .joinToString(", ") { nfcData -> nfcData.toString() }
-
-    override fun onResume() {
-        super.onResume()
-        nfcManager?.enableForegroundDispatch(this)
-    }
-
-    override fun onPause() {
-        super.onPause()
-        nfcManager?.disableForegroundDispatch(this)
-    }
 
 }

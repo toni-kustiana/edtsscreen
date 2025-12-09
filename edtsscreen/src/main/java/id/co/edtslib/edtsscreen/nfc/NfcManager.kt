@@ -1,6 +1,5 @@
 package id.co.edtslib.edtsscreen.nfc
 
-import android.app.Activity
 import android.app.PendingIntent
 import android.content.Intent
 import android.nfc.NdefMessage
@@ -95,6 +94,10 @@ class NfcManager(private val activity: FragmentActivity, intent: Intent) {
             null,
             null
         )
+    }
+
+    fun disableForegroundDispatch() {
+        nfcAdapter?.disableForegroundDispatch(activity)
     }
 
     fun processIntent(
@@ -342,7 +345,7 @@ class NfcManager(private val activity: FragmentActivity, intent: Intent) {
 
         delegate?.onLoading(true)
 
-        activity.lifecycleScope.launch {
+        activity.lifecycleScope.launch(Dispatchers.IO) {
             val message = NdefMessage(arrayOf(NdefRecord.createTextRecord("en", text)))
             val messageSize = message.toByteArray().size
             val delayBySize = calculateDelay(messageSize)
@@ -376,15 +379,20 @@ class NfcManager(private val activity: FragmentActivity, intent: Intent) {
 
                         // If we got here, it worked
                         success = true
-                        delegate?.onRead(arrayOf(message))
+                        withContext(Dispatchers.Main) {
+                            delegate?.onRead(arrayOf(message))
+                        }
                         ndef.close() // Clean close
 
                     } else if (formatable != null) {
                         formatable.connect()
                         delay(delayBySize)
                         formatable.format(message)
+
                         success = true
-                        delegate?.onRead(arrayOf(message))
+                        withContext(Dispatchers.Main) {
+                            delegate?.onRead(arrayOf(message))
+                        }
                         formatable.close()
                     } else {
                         throw IOException("Tag is not NDEF compatible")
@@ -411,14 +419,16 @@ class NfcManager(private val activity: FragmentActivity, intent: Intent) {
             }
 
             // 4. Handle final result
-            if (!success) {
-                delegate?.onCommandError(
-                    lastError,
-                    "Failed to write after $maxAttempts attempts: ${lastError?.message}"
-                )
-            }
+            withContext(Dispatchers.Main) {
+                if (!success) {
+                    delegate?.onCommandError(
+                        lastError,
+                        "Failed to write after $maxAttempts attempts: ${lastError?.message}"
+                    )
+                }
 
-            delegate?.onLoading(false)
+                delegate?.onLoading(false)
+            }
         }
     }
 
@@ -432,20 +442,6 @@ class NfcManager(private val activity: FragmentActivity, intent: Intent) {
         messageSize < 100 -> 100L   // Medium: 100ms
         messageSize < 200 -> 150L   // Large: 150ms
         else -> 200L                // Very large: 200ms
-    }
-
-    /**
-     * Call this function on your onResume activity
-     * */
-    fun enableForegroundDispatch(activity: Activity) {
-        nfcAdapter?.enableForegroundDispatch(activity, pendingIntent, null, null)
-    }
-
-    /**
-     * Call this function on your onPause activity
-     * */
-    fun disableForegroundDispatch(activity: Activity) {
-        nfcAdapter?.disableForegroundDispatch(activity)
     }
 
 }

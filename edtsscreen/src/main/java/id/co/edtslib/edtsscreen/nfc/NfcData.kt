@@ -15,7 +15,7 @@ data class NfcData (
         fun fromJson(json: String) =
             try {
                 Gson().fromJson<NfcData?>(json, object : TypeToken<NfcData?>() {}.type)
-            } catch (e: JsonSyntaxException){
+            } catch (_: JsonSyntaxException){
                 null
             }
      }
