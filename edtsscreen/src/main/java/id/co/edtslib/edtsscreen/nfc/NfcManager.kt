@@ -7,14 +7,23 @@ import android.nfc.NdefRecord
 import android.nfc.NfcAdapter
 import android.nfc.Tag
 import android.nfc.tech.IsoDep
+import android.nfc.tech.Ndef
+import android.nfc.tech.NdefFormatable
+import android.os.Build
 import android.os.Parcelable
 import android.provider.Settings
 import android.util.Log
 import android.view.View
 import androidx.fragment.app.FragmentActivity
+import androidx.lifecycle.lifecycleScope
 import com.google.gson.Gson
 import id.co.edtslib.edtsds.popup.Popup
 import id.co.edtslib.edtsds.popup.PopupDelegate
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.io.IOException
 
 class NfcManager(private val activity: FragmentActivity, intent: Intent) {
     interface NfcManagerDelegate {
@@ -28,6 +37,7 @@ class NfcManager(private val activity: FragmentActivity, intent: Intent) {
         fun openSetting(popup: Popup)
         fun onClosePopup()
         fun onCommandError(err: Exception?, message: String?)
+        fun onLoading(isLoading: Boolean) {}
     }
 
     private var nfcAdapter: NfcAdapter? = NfcAdapter.getDefaultAdapter(activity)
@@ -86,9 +96,22 @@ class NfcManager(private val activity: FragmentActivity, intent: Intent) {
         )
     }
 
-    fun processIntent(intent: Intent, command: ByteArray) {
-        activity.intent = intent
-        resolveIntent(intent, command)
+    fun disableForegroundDispatch() {
+        nfcAdapter?.disableForegroundDispatch(activity)
+    }
+
+    fun processIntent(
+        intent: Intent,
+        command: ByteArray,
+        nfcMode: NfcMode = NfcMode.READ,
+        valueToWrite: String? = null
+    ) {
+        if (nfcMode.isRead()) {
+            activity.intent = intent
+            resolveIntent(intent, command)
+        } else {
+            writeToTag(intent, valueToWrite)
+        }
     }
 
     @Suppress("DEPRECATION")
@@ -133,31 +156,48 @@ class NfcManager(private val activity: FragmentActivity, intent: Intent) {
         }
     }
 
-    private fun connectToTag(isoDep: IsoDep): Boolean {
-        if (!isoDep.isConnected) {
-            try {
-                isoDep.connect()
-                isoDep.timeout = timeout  // 5 sec time out
-            } catch (e: Exception) {
-                e.printStackTrace()
-                Log.e("NfcManager", "Could not connect to tag")
-                delegate?.onCommandError(e, "TRANSMISSION_ERROR")
-                return false
+    private fun processIsoDep(tag: Tag, command: ByteArray) {
+        delegate?.onLoading(false)
+        delegate?.onLoading(true)
+
+        activity.lifecycleScope.launch(Dispatchers.IO) {
+            val isoDep = IsoDep.get(tag)
+
+            if (isoDep == null) {
+                Log.e("NfcManager", "isoDep is null")
+                withContext(Dispatchers.Main) {
+                    delegate?.onCommandError(null, "isoDep is null")
+                    delegate?.onLoading(false)
+                }
+                return@launch
             }
 
-        }
-        return true
-    }
+            this@NfcManager.isoDep = isoDep
 
-    private fun processIsoDep(tag: Tag, command: ByteArray) {
-        isoDep = IsoDep.get(tag)
-        isoDep?.let {
-            val isConnected = connectToTag(it)
-            if (isConnected) {
-                sendCommand(command)
-            } else {
-                Log.e("NfcManager", "NFC not connected")
-                delegate?.onCommandError(null, "NFC not connected")
+            try {
+                isoDep.connect()
+                isoDep.timeout = timeout
+
+                if (isoDep.isConnected) {
+                    withContext(Dispatchers.Main) {
+                        sendCommand(command)
+                    }
+                } else {
+                    Log.e("NfcManager", "NFC not connected")
+
+                    withContext(Dispatchers.Main) {
+                        delegate?.onCommandError(null, "NFC not connected")
+                        delegate?.onLoading(false)
+                    }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                Log.e("NfcManager", "Could not connect to tag. error=${e.message}")
+
+                withContext(Dispatchers.Main) {
+                    delegate?.onCommandError(e, "TRANSMISSION_ERROR ${e.message}")
+                    delegate?.onLoading(false)
+                }
             }
         }
     }
@@ -166,39 +206,52 @@ class NfcManager(private val activity: FragmentActivity, intent: Intent) {
         isoDep?.close()
     }
 
-    fun sendCommand(command: ByteArray) {
-        if (isoDep != null) {
-            try {
-                val apduResponse = isoDep!!.transceive(command)
-                delegate?.onCommandReceived(command, apduResponse)
-            } catch (err: Exception) {
-                err.printStackTrace()
-                Log.e("NfcManager", "error=${err.message}")
-                delegate?.onCommandError(err, err.message)
-            }
-        } else {
-            Log.e("NfcManager", "isoDep is null")
-            delegate?.onCommandError(null, "isoDep is null")
-        }
-    }
-
     fun sendCommand(
         command: ByteArray,
-        onSuccess: (command: ByteArray, response: ByteArray) -> Unit,
-        onError: (error: Exception?, message: String?) -> Unit
+        onSuccess: ((command: ByteArray, response: ByteArray) -> Unit)? = null,
+        onError: ((error: Exception?, message: String?) -> Unit)? = null
     ) {
-        if (isoDep != null) {
+        val currentIsoDep = isoDep
+
+        if (currentIsoDep == null || !currentIsoDep.isConnected) {
+            Log.e("NfcManager", "isoDep is null or not connected")
+            if (onError != null) {
+                onError.invoke(null, "NFC not connected")
+            } else {
+                delegate?.onCommandError(null, "NFC not connected")
+            }
+            delegate?.onLoading(false)
+            return
+        }
+
+        delegate?.onLoading(false)
+        delegate?.onLoading(true)
+
+        activity.lifecycleScope.launch(Dispatchers.IO) {
             try {
-                val apduResponse = isoDep!!.transceive(command)
-                onSuccess.invoke(command, apduResponse)
+                val apduResponse = currentIsoDep.transceive(command)
+
+                withContext(Dispatchers.Main) {
+                    if (onSuccess != null) {
+                        onSuccess.invoke(command, apduResponse)
+                    } else {
+                        delegate?.onCommandReceived(command, apduResponse)
+                    }
+                    delegate?.onLoading(false)
+                }
             } catch (err: Exception) {
                 err.printStackTrace()
                 Log.e("NfcManager", "error=${err.message}")
-                onError.invoke(err, err.message)
+
+                withContext(Dispatchers.Main) {
+                    if (onError != null) {
+                        onError.invoke(err, err.message)
+                    } else {
+                        delegate?.onCommandError(err, err.message)
+                    }
+                    delegate?.onLoading(false)
+                }
             }
-        } else {
-            Log.e("NfcManager", "isoDep is null")
-            onError.invoke(null, "isoDep is null")
         }
     }
 
@@ -258,6 +311,137 @@ class NfcManager(private val activity: FragmentActivity, intent: Intent) {
             }
         }
         return sb.toString()*/
+    }
+
+    // case write on iso dep card (ex: brizzi)
+    private fun silentCloseIsoDep() {
+        try {
+            closeConnection()
+        } catch (_: Exception) {
+            // If it fails (e.g., tag already removed), we don't care.
+            // Just ignore the crash.
+        }
+        isoDep = null
+    }
+
+    fun writeToTag(intent: Intent, text: String?) {
+        val tag = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            intent.getParcelableExtra(NfcAdapter.EXTRA_TAG, Tag::class.java)
+        } else {
+            @Suppress("DEPRECATION")
+            intent.getParcelableExtra(NfcAdapter.EXTRA_TAG)
+        } ?: run {
+            delegate?.onCommandError(null, "No NFC tag found")
+            return
+        }
+
+        if (text.isNullOrEmpty()) {
+            delegate?.onCommandError(null, "Value is empty")
+            return
+        }
+
+        // 1. Force close any existing IsoDep connection before starting NDEF write
+        silentCloseIsoDep()
+
+        delegate?.onLoading(true)
+
+        activity.lifecycleScope.launch(Dispatchers.IO) {
+            val message = NdefMessage(arrayOf(NdefRecord.createTextRecord("en", text)))
+            val messageSize = message.toByteArray().size
+            val delayBySize = calculateDelay(messageSize)
+
+            var success = false
+            var lastError: Exception? = null
+
+            // 2. RETRY LOOP: Try up to 3 times
+            val maxAttempts = 3
+            for (attempt in 1..maxAttempts) {
+                if (success) break
+
+                try {
+                    val ndef = Ndef.get(tag)
+                    val formatable = NdefFormatable.get(tag)
+
+                    if (ndef != null) {
+                        // Try to connect
+                        if (!ndef.isConnected) ndef.connect()
+
+                        if (!ndef.isWritable) {
+                            throw IOException("Tag is read-only")
+                        }
+                        if (ndef.maxSize < messageSize) {
+                            throw IOException("Tag capacity too small")
+                        }
+
+                        // Apply delay for stability
+                        delay(delayBySize)
+                        ndef.writeNdefMessage(message)
+
+                        // If we got here, it worked
+                        success = true
+                        withContext(Dispatchers.Main) {
+                            delegate?.onRead(arrayOf(message))
+                        }
+                        ndef.close() // Clean close
+
+                    } else if (formatable != null) {
+                        formatable.connect()
+                        delay(delayBySize)
+                        formatable.format(message)
+
+                        success = true
+                        withContext(Dispatchers.Main) {
+                            delegate?.onRead(arrayOf(message))
+                        }
+                        formatable.close()
+                    } else {
+                        throw IOException("Tag is not NDEF compatible")
+                    }
+
+                } catch (e: IOException) {
+                    lastError = e
+                    Log.w("NfcManager", "Write attempt $attempt failed: ${e.message}")
+
+                    // 3. CRITICAL: Close connection before retrying to reset the stack
+                    try {
+                        Ndef.get(tag)?.close()
+                        NdefFormatable.get(tag)?.close()
+                    } catch (_: Exception) {
+                    }
+
+                    // Wait a bit before retrying (RF field stabilization)
+                    if (attempt < maxAttempts) delay(500)
+                } catch (e: Exception) {
+                    // Non-recoverable errors (logic bugs, etc)
+                    lastError = e
+                    break
+                }
+            }
+
+            // 4. Handle final result
+            withContext(Dispatchers.Main) {
+                if (!success) {
+                    delegate?.onCommandError(
+                        lastError,
+                        "Failed to write after $maxAttempts attempts: ${lastError?.message}"
+                    )
+                }
+
+                delegate?.onLoading(false)
+            }
+        }
+    }
+
+    /**
+     * Calculates a safe artificial delay (in milliseconds) before writing to the NFC tag.
+     * The delay helps ensure that the tag’s internal write buffer is ready, especially for
+     * tags with slower response times or larger NDEF payloads.
+     */
+    private fun calculateDelay(messageSize: Int) = when {
+        messageSize < 50 -> 50L     // Small: minimal delay
+        messageSize < 100 -> 100L   // Medium: 100ms
+        messageSize < 200 -> 150L   // Large: 150ms
+        else -> 200L                // Very large: 200ms
     }
 
 }

@@ -1,51 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="@dimen/dimen_16dp"
+    android:gravity="center"
     tools:context=".MainActivity">
 
-    <id.co.edtslib.edtsscreen.coachmark.CoachMarkView
-        android:focusableInTouchMode="true"
-        android:focusable="true"
-        android:clickable="true"
-        android:id="@+id/coachMarkView"
+    <Button
+        android:id="@+id/btnCoachmark"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:visibility="gone"/>
+        android:layout_height="wrap_content"
+        android:text="Coachmark"/>
 
-    <androidx.appcompat.widget.AppCompatTextView
-        android:id="@+id/tv10"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        android:layout_marginTop="@dimen/dimen_20dp"
-        android:textSize="@dimen/dimen_40dp"
-        android:text="10"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
+    <Button
+        android:id="@+id/btnNFC"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="NFC"/>
 
-    <androidx.appcompat.widget.AppCompatTextView
-        android:id="@+id/tv20"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
-        android:layout_marginBottom="@dimen/dimen_20dp"
-        android:textSize="@dimen/dimen_40dp"
-        android:text="20"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
-
-    <androidx.appcompat.widget.AppCompatTextView
-        android:id="@+id/tv30"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        android:textSize="@dimen/dimen_40dp"
-        android:text="30"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
-
-</androidx.constraintlayout.widget.ConstraintLayout>
+</LinearLayout>

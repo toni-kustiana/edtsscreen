@@ -4,4 +4,9 @@
     <string name="coach_mark_prev">Sebelumnya</string>
     <string name="coach_mark_n_from" formatted="false">%d dari %d</string>
     <string name="coach_mark_skip">Lewati</string>
+    <string name="mode">Mode</string>
+    <string name="nfc_data">NFC Data</string>
+    <string name="nfc_bytes">NFC Bytes</string>
+    <string name="nfc_error">NFC Error</string>
+    <string name="value_to_write">Value to write</string>
 </resources>

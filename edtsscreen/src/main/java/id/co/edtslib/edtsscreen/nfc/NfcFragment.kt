@@ -6,10 +6,13 @@ import android.provider.Settings
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.core.view.isVisible
+import androidx.lifecycle.lifecycleScope
 import id.co.edtslib.edtsds.popup.Popup
 import id.co.edtslib.edtsscreen.databinding.EdtsScreenFragmentNfcBinding
 import id.co.edtslib.edtsscreen.nfc.parser.NdefMessageParser
 import id.co.edtslib.uibase.BaseFragment
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 open class NfcFragment : BaseFragment<EdtsScreenFragmentNfcBinding>() {
 
@@ -25,21 +28,29 @@ open class NfcFragment : BaseFragment<EdtsScreenFragmentNfcBinding>() {
     override fun setup() {
         binding.bottomLayout.titleDivider = false
 
-        nfcManager =
-            NfcManager(requireActivity(), Intent(requireActivity(), requireActivity().javaClass))
+        val intent = Intent(requireActivity(), requireActivity()::class.java)
+        nfcManager = NfcManager(requireActivity(), intent)
         nfcManager.checkNfcFeature {
             binding.root.isVisible = true
         }
         nfcManager.delegate = object : NfcManager.NfcManagerDelegate {
             override fun onRead(messages: Array<NdefMessage?>) {
-                binding.root.isVisible = true
-                binding.root.postDelayed({
+                // This prevents crashes if the fragment is destroyed during the delay
+                lifecycleScope.launch {
+                    binding.root.isVisible = true
+
+                    delay(200L) // Suspend instead of blocking/callback
+
+                    if (!isAdded) return@launch
+
                     binding.root.isVisible = keepTrayAfterScan
-                    messages.forEach {
-                        val records = NdefMessageParser.parse(it)
-                        delegate?.onNfcReceived(records)
-                    }
-                }, 200L)
+
+                    val allRecords = messages
+                        .filterNotNull()
+                        .flatMap { NdefMessageParser.parse(it) }
+
+                    delegate?.onNfcReceived(allRecords)
+                }
             }
 
             override fun onCommandReceived(txBytes: ByteArray, rxBytes: ByteArray) {
@@ -60,20 +71,44 @@ open class NfcFragment : BaseFragment<EdtsScreenFragmentNfcBinding>() {
             override fun onCommandError(err: Exception?, message: String?) {
                 delegate?.onCommandError(err, message)
             }
+
+            override fun onLoading(isLoading: Boolean) {
+                if (isAdded) {
+                    delegate?.onLoading(isLoading)
+                }
+            }
         }
     }
 
-    fun process(intent: Intent, command: ByteArray) {
-        nfcManager.processIntent(intent, command)
+    fun process(
+        intent: Intent,
+        command: ByteArray,
+        nfcMode: NfcMode = NfcMode.READ,
+        valueToWrite: String? = null
+    ) {
+        if (::nfcManager.isInitialized) {
+            nfcManager.processIntent(intent, command, nfcMode, valueToWrite)
+        }
     }
 
     override fun onResume() {
         super.onResume()
-        nfcManager.dispatch()
+        if (::nfcManager.isInitialized) {
+            nfcManager.dispatch()
+        }
+    }
+
+    override fun onPause() {
+        super.onPause()
+        if (::nfcManager.isInitialized) {
+            nfcManager.disableForegroundDispatch()
+        }
     }
 
     fun showTray() {
-        binding.root.isVisible = true
+        if (::nfcManager.isInitialized) {
+            binding.root.isVisible = true
+        }
     }
 
 }
