@@ -61,7 +61,7 @@ open class InAppBannerDialog(private val fragmentActivity: FragmentActivity,
                             )
                         }
 
-                        override fun errorConnection() {
+                        override fun errorConnection(data: InAppBannerData?) {
                             dialog = null
                             delegate?.onError(
                                 code = "404",
@@ -70,7 +70,7 @@ open class InAppBannerDialog(private val fragmentActivity: FragmentActivity,
                             )
                         }
 
-                        override fun errorSystem() {
+                        override fun errorSystem(data: InAppBannerData?) {
                             dialog = null
                             delegate?.onError(
                                 code = "503",
