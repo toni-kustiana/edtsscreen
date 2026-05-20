@@ -6,11 +6,13 @@ import android.graphics.Color
 import android.graphics.Rect
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
+import android.view.WindowManager
 import android.view.LayoutInflater
 import android.widget.FrameLayout
 import android.widget.Toast
 import androidx.core.view.isVisible
 import androidx.fragment.app.FragmentActivity
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.DataSource
@@ -109,15 +111,30 @@ open class InAppBannerDialog(private val fragmentActivity: FragmentActivity,
 
     @SuppressLint("CheckResult")
     fun showBanner(banner: InAppBannerData) {
+        if (!canShowPopup()) {
+            dialog = null
+            return
+        }
+
         if (popup == null) {
-            popup = Popup.showFullScreen(
-                view = binding.root,
-                dismissible = dismissible)
+            popup = try {
+                Popup.showFullScreen(
+                    view = binding.root,
+                    dismissible = dismissible
+                )
+            } catch (_: WindowManager.BadTokenException) {
+                dialog = null
+                null
+            }
             popup?.setOnDismissListener {
                 inAppBannerUseCase.show(banner)
                 popup = null
                 dialog = null
             }
+        }
+
+        if (popup == null) {
+            return
         }
 
         binding.clDialog.setOnClickListener {
@@ -133,8 +150,6 @@ open class InAppBannerDialog(private val fragmentActivity: FragmentActivity,
         binding.imageView.setOnClickListener {
             click(banner)
         }
-
-        popup?.show()
 
         binding.root.post {
             val lpShimmer = binding.shimmerFrameLayout.layoutParams as FrameLayout.LayoutParams
@@ -211,6 +226,12 @@ open class InAppBannerDialog(private val fragmentActivity: FragmentActivity,
                 }
             }
         }
+    }
+
+    private fun canShowPopup(): Boolean {
+        return !fragmentActivity.isFinishing &&
+            !fragmentActivity.isDestroyed &&
+            fragmentActivity.lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)
     }
 
     fun close() {
