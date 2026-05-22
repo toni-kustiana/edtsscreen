@@ -161,6 +161,7 @@ class NfcManager(private val activity: FragmentActivity, intent: Intent) {
         delegate?.onLoading(true)
 
         activity.lifecycleScope.launch(Dispatchers.IO) {
+            resetConnectedTechnologies(tag)
             val isoDep = IsoDep.get(tag)
 
             if (isoDep == null) {
@@ -193,6 +194,7 @@ class NfcManager(private val activity: FragmentActivity, intent: Intent) {
             } catch (e: Exception) {
                 e.printStackTrace()
                 Log.e("NfcManager", "Could not connect to tag. error=${e.message}")
+                silentCloseIsoDep()
 
                 withContext(Dispatchers.Main) {
                     delegate?.onCommandError(e, "TRANSMISSION_ERROR ${e.message}")
@@ -251,6 +253,8 @@ class NfcManager(private val activity: FragmentActivity, intent: Intent) {
                     }
                     delegate?.onLoading(false)
                 }
+            } finally {
+                silentCloseIsoDep()
             }
         }
     }
@@ -324,6 +328,20 @@ class NfcManager(private val activity: FragmentActivity, intent: Intent) {
         isoDep = null
     }
 
+    private fun resetConnectedTechnologies(tag: Tag) {
+        silentCloseIsoDep()
+
+        try {
+            Ndef.get(tag)?.close()
+        } catch (_: Exception) {
+        }
+
+        try {
+            NdefFormatable.get(tag)?.close()
+        } catch (_: Exception) {
+        }
+    }
+
     fun writeToTag(intent: Intent, text: String?) {
         val tag = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             intent.getParcelableExtra(NfcAdapter.EXTRA_TAG, Tag::class.java)
@@ -340,8 +358,8 @@ class NfcManager(private val activity: FragmentActivity, intent: Intent) {
             return
         }
 
-        // 1. Force close any existing IsoDep connection before starting NDEF write
-        silentCloseIsoDep()
+        // 1. Force close any existing tech connection before starting NDEF write
+        resetConnectedTechnologies(tag)
 
         delegate?.onLoading(true)
 
