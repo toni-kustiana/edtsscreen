@@ -87,7 +87,7 @@ open class ScanCodeFragment: BaseFragment<EdtsScreenFragmentScanCodeBinding>() {
     }
 
     fun start() {
-        PermissionUtils.askCameraPermission(cameraPermissionResult)
+        PermissionUtils.askCameraOnlyPermission(cameraPermissionResult)
     }
 
     fun stop() {

@@ -96,6 +96,10 @@ object PermissionUtils {
         }
     }
 
+    fun askCameraOnlyPermission(resultLauncher: ActivityResultLauncher<Array<String>>) {
+        resultLauncher.launch(arrayOf(Manifest.permission.CAMERA))
+    }
+
     fun userRunTimePermission(): Boolean {
         return Build.VERSION.SDK_INT >= Build.VERSION_CODES.M
     }

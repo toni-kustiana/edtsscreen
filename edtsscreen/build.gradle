@@ -13,9 +13,9 @@ afterEvaluate {
             // Creates a Maven publication called "release".
             release(MavenPublication) {
                 from components.release
-                groupId = 'id.co.edtslib.edtsscreen'
+                groupId = 'com.github.edtslib'
                 artifactId = 'edtsscreen'
-                version = '1.0.0'
+                version = '1.1.7-cameraIssue'
             }
         }
     }
